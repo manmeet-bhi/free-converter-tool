@@ -55,20 +55,20 @@ export const FaqView: React.FC = () => {
     <div className="space-y-10 py-6 max-w-3xl mx-auto px-4">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
-          <HelpCircle className="w-3.5 h-3.5" />
+        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 shadow-xs">
+          <HelpCircle className="w-4 h-4" />
           <span>Knowledge Base</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
           Frequently Asked Questions
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
           Everything you need to know about browser-based image conversion, compression algorithms, and privacy.
         </p>
       </div>
 
       {/* Accordion */}
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {FAQS.map((faq, idx) => {
           const isOpen = openIndex === idx;
           return (
@@ -79,18 +79,18 @@ export const FaqView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => toggle(idx)}
-                className="w-full text-left px-5 py-4 flex items-center justify-between text-sm sm:text-base font-semibold text-slate-900 dark:text-white focus:outline-none"
+                className="w-full text-left px-6 py-4.5 flex items-center justify-between text-base sm:text-lg font-bold text-slate-900 dark:text-white focus:outline-none"
               >
                 <span>{faq.question}</span>
                 <ChevronDown
-                  className={`w-4 h-4 text-slate-400 shrink-0 ml-3 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-slate-400 shrink-0 ml-3 transition-transform duration-200 ${
                     isOpen ? 'rotate-180 text-blue-500' : ''
                   }`}
                 />
               </button>
 
               {isOpen && (
-                <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                <div className="px-6 pb-6 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/80 pt-4">
                   {faq.answer}
                 </div>
               )}

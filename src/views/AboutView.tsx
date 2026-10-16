@@ -128,7 +128,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
           <div className="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-900 dark:text-white">Memory Lifecycle Management:</strong> Immediate reclamation of RAM via <code className="font-mono text-[11px]">URL.revokeObjectURL()</code>.
+              <strong className="text-slate-900 dark:text-white">Memory Lifecycle Management:</strong> Immediate reclamation of RAM via <code className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">URL.revokeObjectURL()</code>.
             </div>
           </div>
         </div>
@@ -136,8 +136,8 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
 
       {/* Community & GitHub CTA */}
       <div className="rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white p-8 sm:p-10 shadow-lg shadow-blue-500/20 text-center space-y-4">
-        <h3 className="text-2xl font-bold">Built for Creators, Developers & Teams</h3>
-        <p className="text-blue-100 max-w-xl mx-auto text-sm leading-relaxed">
+        <h3 className="text-2xl sm:text-3xl font-extrabold">Built for Creators, Developers & Teams</h3>
+        <p className="text-blue-100 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
           ImageKit is an open-source project maintained on GitHub. Star our repository, submit issues, or contribute features!
         </p>
         <div className="pt-2 flex flex-wrap justify-center gap-3">
@@ -145,17 +145,17 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
             href="https://github.com/manmeet-bhi/free-converter-tool"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-blue-900 hover:bg-blue-50 transition-colors shadow"
+            className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-white text-blue-900 hover:bg-blue-50 transition-all shadow-md active:scale-98"
           >
-            <Github className="w-4 h-4" />
+            <Github className="w-5 h-5" />
             <span>Star on GitHub</span>
           </a>
           <button
             onClick={() => { setActiveTab('converter'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="inline-flex items-center space-x-1.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-800 hover:bg-blue-900 text-white transition-colors border border-blue-400/30"
+            className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-blue-800 hover:bg-blue-900 text-white transition-all border border-blue-400/30 shadow-md active:scale-98"
           >
             <span>Start Converting</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>

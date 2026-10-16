@@ -67,42 +67,42 @@ export const ContactView: React.FC = () => {
         {/* Contact Info Sidebar */}
         <div className="space-y-6">
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center space-x-2">
-              <Mail className="w-4 h-4 text-blue-500" />
+            <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+              <Mail className="w-5 h-5 text-blue-500" />
               <span>Direct Support</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               For general questions, partnerships, or security inquiries, reach out to our team directly:
             </p>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 font-mono text-xs text-blue-600 dark:text-blue-400 break-all select-all">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 font-mono text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all select-all font-semibold">
               support@free-converter-tool.com
             </div>
           </div>
 
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center space-x-2">
-              <Github className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+              <Github className="w-5 h-5 text-slate-700 dark:text-slate-300" />
               <span>Bug Reports & GitHub</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Found a bug or need support for a specialized image codec? Open an issue on our GitHub repository:
             </p>
             <a
               href="https://github.com/manmeet-bhi/free-converter-tool/issues"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 w-full justify-center px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors"
+              className="inline-flex items-center space-x-2 w-full justify-center px-4 py-3 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors shadow-xs"
             >
               <span>Open GitHub Issue &rarr;</span>
             </a>
           </div>
 
           <div className="p-6 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex items-center space-x-2 text-sm font-bold text-emerald-800 dark:text-emerald-300">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               <span>Security Guarantee</span>
             </div>
-            <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
+            <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">
               We never ask for user login credentials, API tokens, or image file uploads. All communications are strictly confidential.
             </p>
           </div>
@@ -116,16 +116,16 @@ export const ContactView: React.FC = () => {
                 <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-md">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
                   Message Sent Successfully!
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
                   Thank you for reaching out to Free Converter Tool. Our team will review your message and respond to <strong>{formData.email}</strong> shortly.
                 </p>
                 <div className="pt-4">
                   <button
                     onClick={handleReset}
-                    className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
+                    className="px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-colors"
                   >
                     Send Another Message
                   </button>
@@ -133,12 +133,12 @@ export const ContactView: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                   Send us a Message
                 </h3>
 
                 {error && (
-                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-center space-x-2">
+                  <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-sm text-rose-700 dark:text-rose-300 flex items-center space-x-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -146,7 +146,7 @@ export const ContactView: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Your Name <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -155,12 +155,12 @@ export const ContactView: React.FC = () => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Jane Doe"
-                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm sm:text-base bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Email Address <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -169,19 +169,19 @@ export const ContactView: React.FC = () => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="jane@example.com"
-                      className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-2.5 rounded-xl text-sm sm:text-base bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Subject
                   </label>
                   <select
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm sm:text-base bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="General Inquiry">General Inquiry</option>
                     <option value="Feature Suggestion">Feature Suggestion</option>
@@ -192,7 +192,7 @@ export const ContactView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Your Message <span className="text-rose-500">*</span>
                   </label>
                   <textarea
@@ -201,14 +201,14 @@ export const ContactView: React.FC = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Describe your inquiry, suggestion, or feedback..."
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-xl text-sm sm:text-base bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg shadow-blue-500/20 transition-all active:scale-98 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     <span>Send Message</span>

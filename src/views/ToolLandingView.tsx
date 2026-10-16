@@ -66,7 +66,7 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
   return (
     <article className="space-y-12 py-8 max-w-6xl mx-auto px-4 sm:px-6">
       {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+      <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
         <button 
           onClick={() => handleNav('/')}
           className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -88,8 +88,8 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
 
       {/* Hero Header */}
       <header className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-900/60 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-900/60 shadow-xs">
+          <Sparkles className="w-4 h-4 text-blue-500" />
           <span>{config.badge}</span>
         </div>
 
@@ -97,21 +97,21 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
           {config.h1}
         </h1>
 
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
           {config.intro}
         </p>
 
         {/* Trust & Performance Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-sm">
+          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             <span className="font-semibold">100% In-Browser Privacy</span>
           </div>
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
+          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
             <Zap className="w-4 h-4 text-amber-500" />
             <span className="font-semibold">Instant Local Processing</span>
           </div>
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
+          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
             <Lock className="w-4 h-4 text-blue-500" />
             <span className="font-semibold">Zero Server Uploads</span>
           </div>
@@ -148,10 +148,10 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
       {/* Step-by-Step Instructions */}
       <section className="space-y-6 pt-4">
         <div className="text-center max-w-xl mx-auto space-y-1.5">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
             How to Use This Tool in 3 Easy Steps
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
             Fast, intuitive workflow designed for speed, privacy, and maximum quality.
           </p>
         </div>
@@ -162,13 +162,13 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
               key={idx}
               className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 relative overflow-hidden"
             >
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-extrabold text-sm flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-extrabold text-base flex items-center justify-center">
                 {idx + 1}
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {step.title}
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 {step.desc}
               </p>
             </div>
@@ -179,10 +179,10 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
       {/* Key Benefits Grid */}
       <section className="space-y-6 pt-4">
         <div className="text-center max-w-xl mx-auto space-y-1.5">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
             Why Choose ImageKit for Your Images?
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
             Built for developers, designers, and privacy-conscious users worldwide.
           </p>
         </div>
@@ -193,13 +193,13 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
               key={idx}
               className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2 hover:border-blue-400 dark:hover:border-blue-600 transition-colors"
             >
-              <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
+              <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold">
                 <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {benefit.title}
                 </h3>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pl-6">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed pl-6">
                 {benefit.desc}
               </p>
             </div>
@@ -211,11 +211,11 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
       {config.faqs.length > 0 && (
         <section className="space-y-6 pt-4">
           <div className="text-center max-w-xl mx-auto space-y-1.5">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center space-x-2">
-              <HelpCircle className="w-5 h-5 text-blue-500" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white flex items-center justify-center space-x-2">
+              <HelpCircle className="w-6 h-6 text-blue-500" />
               <span>Frequently Asked Questions</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
               Clear answers to common questions about formats, compression, and security.
             </p>
           </div>
@@ -227,18 +227,18 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
                 <div key={idx} className="transition-colors">
                   <button
                     onClick={() => toggleFaq(idx)}
-                    className="w-full py-4 px-6 text-left flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
+                    className="w-full py-4 px-6 text-left flex items-center justify-between text-base font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
                     aria-expanded={isOpen}
                   >
                     <span>{faq.question}</span>
                     {isOpen ? (
-                      <ChevronUp className="w-4 h-4 text-slate-400 shrink-0 ml-2" />
+                      <ChevronUp className="w-5 h-5 text-slate-400 shrink-0 ml-2" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 ml-2" />
+                      <ChevronDown className="w-5 h-5 text-slate-400 shrink-0 ml-2" />
                     )}
                   </button>
                   {isOpen && (
-                    <div className="px-6 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div className="px-6 pb-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       {faq.answer}
                     </div>
                   )}
@@ -257,16 +257,16 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Related Image Optimization Tools
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Explore complementary conversion, compression, and scaling tools.
               </p>
             </div>
             <button
               onClick={() => handleNav('/converter')}
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
+              className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
             >
               <span>View All Tools</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -275,14 +275,14 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
               <button
                 key={idx}
                 onClick={() => handleNav(tool.slug)}
-                className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all group flex flex-col justify-between space-y-2 shadow-xs"
+                className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all group flex flex-col justify-between space-y-2 shadow-xs"
               >
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between">
                     <span>{tool.label}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     {tool.desc}
                   </p>
                 </div>

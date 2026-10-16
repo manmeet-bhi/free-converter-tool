@@ -186,7 +186,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
               </div>
               <span>Image Converter</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Convert any image to WebP, PNG, JPG, BMP, or ICO in batch with full privacy.
             </p>
           </div>
@@ -195,9 +195,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleClearAll}
-                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
                 <span>Clear Queue</span>
               </button>
             </div>
@@ -209,9 +209,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         <div className="flex justify-end border-b border-slate-200 dark:border-slate-800 pb-4">
           <button
             onClick={handleClearAll}
-            className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
             <span>Clear Queue</span>
           </button>
         </div>
@@ -230,13 +230,13 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center space-x-1.5">
-                <Sliders className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center space-x-2">
+                <Sliders className="w-4 h-4 text-blue-500" />
                 <span>Convert All To:</span>
               </span>
 
               {/* Format selection chips */}
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {availableFormats.map((fmt) => {
                   const isSelected = batchTargetFormat === fmt.id;
                   const isAvailable = fmt.canEncode;
@@ -247,11 +247,11 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                         type="button"
                         disabled={!isAvailable}
                         onClick={() => handleApplyBatchFormat(fmt.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
+                        className={`px-3.5 py-2 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-150 ${
                           !isAvailable
                             ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400'
                             : isSelected
-                            ? 'bg-blue-600 text-white shadow-xs scale-102 ring-2 ring-blue-500/30'
+                            ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/30'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                         }`}
                         title={fmt.description}
@@ -261,7 +261,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                       </button>
 
                       {!isAvailable && (
-                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2.5 rounded-xl bg-slate-900 text-white text-[11px] shadow-xl border border-slate-700 leading-normal pointer-events-none">
+                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl border border-slate-700 leading-normal pointer-events-none">
                           <p className="font-semibold text-amber-300 mb-0.5">Encoding Unavailable</p>
                           <p>{fmt.unsupportedMessage || `${fmt.label} canvas encoding is not supported in this browser version.`}</p>
                         </div>
@@ -272,15 +272,14 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
               </div>
             </div>
 
-
             {/* Batch actions */}
-            <div className="flex items-center space-x-2.5 w-full md:w-auto justify-end">
+            <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
               <button
                 onClick={handleConvertAll}
                 disabled={isProcessingAll}
-                className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-98"
+                className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all active:scale-98"
               >
-                <RefreshCw className={`w-4 h-4 ${isProcessingAll ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 ${isProcessingAll ? 'animate-spin' : ''}`} />
                 <span>{isProcessingAll ? 'Converting...' : `Convert All (${images.length})`}</span>
               </button>
 
@@ -288,9 +287,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                 <button
                   onClick={handleDownloadAllZip}
                   disabled={isZipping}
-                  className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all active:scale-98"
+                  className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all active:scale-98"
                 >
-                  <Archive className="w-4 h-4" />
+                  <Archive className="w-5 h-5" />
                   <span>{isZipping ? `Archiving (${zipProgress}%)...` : `Download All (${completedCount} ZIP)`}</span>
                 </button>
               )}
@@ -299,9 +298,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
           {/* Quality slider for lossy batch formats */}
           {(batchTargetFormat === 'jpeg' || batchTargetFormat === 'webp') && (
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
               <div className="flex items-center space-x-3">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                <span className="font-bold text-slate-700 dark:text-slate-300">
                   Target Quality:
                 </span>
                 <input
@@ -322,7 +321,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                 </span>
               </div>
 
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 Higher quality preserves fine textures; lower quality decreases file size.
               </span>
             </div>
@@ -395,21 +394,21 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                             prev.map((i) => (i.id === item.id ? { ...i, customFilename: newName } : i))
                           );
                         }}
-                        className="font-semibold text-slate-800 dark:text-slate-100 text-sm sm:text-base bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 px-1 py-0.5 rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none truncate max-w-xs sm:max-w-md"
+                        className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 px-1.5 py-1 rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none truncate max-w-xs sm:max-w-md"
                         title="Click to rename output file"
                       />
-                      <Edit2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <Edit2 className="w-4 h-4 text-slate-400 shrink-0" />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
                       <span>{item.originalDimensions.width} × {item.originalDimensions.height} px</span>
                       <span>•</span>
-                      <span>Original: <strong>{formatBytes(item.originalSize)}</strong></span>
-                      <span className="uppercase font-sans font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      <span>Original: <strong className="text-slate-700 dark:text-slate-200">{formatBytes(item.originalSize)}</strong></span>
+                      <span className="uppercase font-sans font-bold text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         {inputFormat}
                       </span>
                       {item.originalInfo.hasTransparency && (
-                        <span className="font-sans text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-900">
+                        <span className="font-sans text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-900">
                           Alpha Transparency
                         </span>
                       )}
@@ -421,7 +420,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                 <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
                   {/* Target format select */}
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">To:</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300 font-bold">To:</span>
                     <select
                       value={item.targetFormat}
                       onChange={(e) => {
@@ -444,7 +443,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                           )
                         );
                       }}
-                      className="text-xs font-bold uppercase rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-1.5 px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="text-sm font-bold uppercase rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     >
                       {availableFormats.map((f) => (
                         <option key={f.id} value={f.id} disabled={!f.canEncode}>
@@ -456,12 +455,12 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
                   {/* Result Size / Savings */}
                   {item.result && savings && (
-                    <div className="text-right font-mono text-xs">
-                      <div className="font-bold text-slate-800 dark:text-slate-100">
+                    <div className="text-right font-mono">
+                      <div className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                         {formatBytes(item.result.fileSizeBytes)}
                       </div>
                       <div
-                        className={`text-[11px] font-semibold ${
+                        className={`text-xs sm:text-sm font-bold ${
                           savings.isSmaller ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
                         }`}
                       >
@@ -475,26 +474,26 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                     {item.status === 'done' && item.result ? (
                       <button
                         onClick={() => downloadBlob(item.result!.blob, item.customFilename)}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="w-4 h-4" />
                         <span>Download</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => convertSingleImage(item.id)}
                         disabled={item.status === 'processing'}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 transition-all active:scale-95"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
-                        <span>{item.status === 'processing' ? 'Converting' : 'Convert'}</span>
+                        <RefreshCw className={`w-4 h-4 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
+                        <span>{item.status === 'processing' ? 'Converting...' : 'Convert'}</span>
                       </button>
                     )}
 
                     <button
                       onClick={() => handleRemoveImage(item.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Remove"
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      title="Remove image"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -504,7 +503,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
               {/* Transparency Warning Notice for JPEG/BMP */}
               {hasTransparencyWarning && (
-                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-800 dark:text-amber-300">
+                <div className="mt-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>
@@ -513,7 +512,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium">Fill Color:</span>
+                    <span className="font-semibold">Fill Color:</span>
                     <input
                       type="color"
                       value={item.backgroundColor}
@@ -523,17 +522,17 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                           prev.map((i) => (i.id === item.id ? { ...i, backgroundColor: newColor } : i))
                         );
                       }}
-                      className="w-7 h-7 rounded border border-slate-300 dark:border-slate-700 cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer"
                     />
-                    <span className="font-mono text-[11px] uppercase">{item.backgroundColor}</span>
+                    <span className="font-mono text-xs uppercase font-semibold">{item.backgroundColor}</span>
                   </div>
                 </div>
               )}
 
               {/* Error message */}
               {item.status === 'error' && (
-                <div className="mt-2 text-xs text-rose-600 dark:text-rose-400 flex items-center space-x-1">
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                <div className="mt-2 text-sm text-rose-600 dark:text-rose-400 font-medium flex items-center space-x-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{item.error || 'Conversion error.'}</span>
                 </div>
               )}

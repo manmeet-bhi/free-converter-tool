@@ -109,21 +109,21 @@ export const FormatsView: React.FC<FormatsViewProps> = ({ setActiveTab }) => {
                   <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
                     {fmt.ext}
                   </span>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${fmt.badgeColor}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${fmt.badgeColor}`}>
                     {fmt.badge}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                   {fmt.name}
                 </h3>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {fmt.desc}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs space-y-1.5">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-sm space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Transparency:</span>
                   <span className={fmt.transparency ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>
@@ -157,25 +157,25 @@ export const FormatsView: React.FC<FormatsViewProps> = ({ setActiveTab }) => {
               key={fmt.name}
               className="p-4 sm:px-6 flex items-center justify-between flex-wrap gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase">
                   {fmt.name.split(' ')[0]}
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     {fmt.name}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {fmt.desc}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
-                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                <span className="font-mono text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
                   {fmt.ext}
                 </span>
-                <span className="inline-flex items-center space-x-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center space-x-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Supported</span>
                 </span>
@@ -189,10 +189,10 @@ export const FormatsView: React.FC<FormatsViewProps> = ({ setActiveTab }) => {
       <div className="text-center pt-2">
         <button
           onClick={handleOpenConverter}
-          className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all"
+          className="inline-flex items-center space-x-2 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all active:scale-98"
         >
           <span>Start Converting Images</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-5 h-5" />
         </button>
       </div>
     </div>

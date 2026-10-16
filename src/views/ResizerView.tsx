@@ -217,7 +217,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             </div>
             <span>Image Resizer</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Resize image dimensions by exact pixels, percentages, or one-click social media presets.
           </p>
         </div>
@@ -231,9 +231,9 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                 });
                 setImages([]);
               }}
-              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               <span>Clear Queue</span>
             </button>
           </div>
@@ -255,46 +255,46 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             {/* Dimension inputs */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Target Dimensions (Pixels)
                 </label>
                 <button
                   type="button"
                   onClick={() => setMaintainAspect(!maintainAspect)}
-                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
+                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                     maintainAspect
                       ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}
                   title="Toggle Maintain Aspect Ratio"
                 >
-                  {maintainAspect ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                  {maintainAspect ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                   <span>{maintainAspect ? 'Ratio Locked' : 'Unlocked'}</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">Width (px)</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1.5">Width (px)</span>
                   <input
                     type="number"
                     min="1"
                     max="10000"
                     value={targetWidth}
                     onChange={(e) => handleWidthChange(parseInt(e.target.value) || 1)}
-                    className="w-full text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="w-full text-base font-mono font-bold px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">Height (px)</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1.5">Height (px)</span>
                   <input
                     type="number"
                     min="1"
                     max="10000"
                     value={targetHeight}
                     onChange={(e) => handleHeightChange(parseInt(e.target.value) || 1)}
-                    className="w-full text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="w-full text-base font-mono font-bold px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               </div>
@@ -302,16 +302,16 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
             {/* Quick Percentage Scaling */}
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
+              <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
                 Quick Scale by Percentage
               </label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-5 gap-2">
                 {[25, 50, 75, 100, 150].map((pct) => (
                   <button
                     key={pct}
                     type="button"
                     onClick={() => handleApplyPercent(pct)}
-                    className={`py-1.5 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                    className={`py-2 rounded-xl text-sm font-mono font-bold border transition-colors ${
                       scalePercent === pct
                         ? 'border-cyan-600 bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300'
                         : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -325,7 +325,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
             {/* Social Media & Platform Presets */}
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
+              <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
                 Social Media & Web Presets
               </label>
               <select
@@ -334,7 +334,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                   if (preset) handleSelectPreset(preset);
                 }}
                 defaultValue=""
-                className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer"
               >
                 <option value="" disabled>Choose a platform preset...</option>
                 {SOCIAL_PRESETS.map((p) => (
@@ -347,7 +347,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
             {/* Upscaling Warning Notice */}
             {isUpscaling && (
-              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-start space-x-2 text-xs text-amber-800 dark:text-amber-300">
+              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-start space-x-2 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                 <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
                   <strong>Upscaling Notice:</strong> Target dimensions exceed original image size. Upscaling may result in slight softness or pixelation.
@@ -358,13 +358,13 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             {/* Output Format and Quality */}
             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Export Format
                 </label>
                 <select
                   value={selectedFormat}
                   onChange={(e) => setSelectedFormat(e.target.value as ImageFormat)}
-                  className="text-xs font-bold uppercase px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  className="text-sm font-bold uppercase px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
                 >
                   {availableFormats.map((f) => (
                     <option key={f.id} value={f.id} disabled={!f.canEncode}>
@@ -375,8 +375,8 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
               </div>
 
               {(selectedFormat === 'jpeg' || selectedFormat === 'webp') && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Quality:</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">Quality:</span>
                   <div className="flex items-center space-x-2">
                     <input
                       type="range"
@@ -385,7 +385,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                       step="0.05"
                       value={quality}
                       onChange={(e) => setQuality(parseFloat(e.target.value))}
-                      className="w-24 accent-cyan-600 cursor-pointer"
+                      className="w-28 accent-cyan-600 cursor-pointer"
                     />
                     <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
                       {Math.round(quality * 100)}%
@@ -396,11 +396,11 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2.5 pt-2">
               <button
                 onClick={handleResizeAll}
                 disabled={isProcessing}
-                className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-md shadow-cyan-500/20 disabled:opacity-50 transition-all active:scale-98"
+                className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl text-base font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-md hover:shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all active:scale-98"
               >
                 <RefreshCw className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
                 <span>{isProcessing ? 'Resizing...' : `Resize All (${images.length})`}</span>
@@ -410,9 +410,9 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                 <button
                   onClick={handleDownloadAllZip}
                   disabled={isZipping}
-                  className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98"
                 >
-                  <Archive className="w-4 h-4" />
+                  <Archive className="w-5 h-5" />
                   <span>Download All Resized ({completedCount} ZIP)</span>
                 </button>
               )}
@@ -442,10 +442,10 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                     </div>
 
                     <div className="min-w-0 space-y-1">
-                      <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate max-w-xs sm:max-w-md">
+                      <div className="font-bold text-slate-800 dark:text-slate-100 text-base truncate max-w-xs sm:max-w-md">
                         {item.customFilename}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono flex flex-wrap items-center gap-2">
+                      <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono flex flex-wrap items-center gap-2">
                         <span>Original: {item.originalDimensions.width}×{item.originalDimensions.height}</span>
                         {item.result && (
                           <>
@@ -466,18 +466,18 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                     {item.result ? (
                       <button
                         onClick={() => downloadBlob(item.result!.blob, item.customFilename)}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="w-4 h-4" />
                         <span>Download</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => resizeSingleItem(item, targetWidth, targetHeight)}
                         disabled={item.status === 'processing'}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white shadow-xs disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm disabled:opacity-50 transition-all active:scale-95"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
                         <span>Resize</span>
                       </button>
                     )}

@@ -42,11 +42,11 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center space-x-2 truncate">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 truncate text-sm sm:text-base">
+          <div className="flex items-center space-x-2.5 truncate">
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 truncate text-base sm:text-lg">
               {filename}
             </h3>
-            <span className="shrink-0 text-xs font-mono uppercase px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-900">
+            <span className="shrink-0 text-xs font-mono uppercase px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-900">
               {format}
             </span>
           </div>
@@ -55,15 +55,15 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             {onDownload && (
               <button
                 onClick={onDownload}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-95"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
                 <span>Download</span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -85,31 +85,31 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         </div>
 
         {/* Modal Footer with details & zoom controls */}
-        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
           <div className="flex items-center space-x-4 font-mono">
             <span>Dimensions: <strong className="text-slate-900 dark:text-white">{width} × {height} px</strong></span>
             <span>Size: <strong className="text-slate-900 dark:text-white">{formatBytes(fileSizeBytes)}</strong></span>
           </div>
 
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
-              className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
               title="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
-            <span className="font-mono text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
+            <span className="font-mono text-sm font-bold w-14 text-center">{Math.round(zoom * 100)}%</span>
             <button
               onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
-              className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
               title="Zoom In"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={() => setZoom(1)}
-              className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
               title="Reset Zoom"
             >
               <RotateCcw className="w-4 h-4" />

@@ -53,12 +53,12 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
 
   return (
     <div className="space-y-2 select-none">
-      <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-        <div className="flex items-center space-x-1.5">
-          <Eye className="w-3.5 h-3.5 text-blue-500" />
+      <div className="flex items-center justify-between text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <div className="flex items-center space-x-2">
+          <Eye className="w-4 h-4 text-blue-500" />
           <span>Interactive Before / After Comparison</span>
         </div>
-        <span className="text-[11px] text-slate-400">Drag center handle</span>
+        <span className="text-xs text-slate-400 font-normal">Drag center handle</span>
       </div>
 
       <div
@@ -111,27 +111,27 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-900 border-2 border-blue-500 text-blue-600 shadow-md flex items-center justify-center cursor-ew-resize pointer-events-auto hover:scale-110 active:scale-95 transition-transform"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-white dark:bg-slate-900 border-2 border-blue-500 text-blue-600 shadow-md flex items-center justify-center cursor-ew-resize pointer-events-auto hover:scale-110 active:scale-95 transition-transform"
           >
-            <ArrowLeftRight className="w-3.5 h-3.5" />
+            <ArrowLeftRight className="w-4 h-4" />
           </div>
         </div>
 
         {/* Labels */}
         <div className="absolute top-3 left-3 pointer-events-none">
-          <div className="bg-slate-900/80 backdrop-blur-sm text-white px-2 py-1 rounded text-xs font-semibold flex items-center space-x-1 shadow">
+          <div className="bg-slate-900/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold flex items-center space-x-1.5 shadow">
             <span>{originalLabel}</span>
             {originalSizeText && (
-              <span className="text-slate-300 font-mono text-[11px]">({originalSizeText})</span>
+              <span className="text-slate-300 font-mono text-xs">({originalSizeText})</span>
             )}
           </div>
         </div>
 
         <div className="absolute top-3 right-3 pointer-events-none">
-          <div className="bg-blue-600/90 backdrop-blur-sm text-white px-2 py-1 rounded text-xs font-semibold flex items-center space-x-1 shadow">
+          <div className="bg-blue-600/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold flex items-center space-x-1.5 shadow">
             <span>{processedLabel}</span>
             {processedSizeText && (
-              <span className="text-blue-100 font-mono text-[11px]">({processedSizeText})</span>
+              <span className="text-blue-100 font-mono text-xs">({processedSizeText})</span>
             )}
           </div>
         </div>
