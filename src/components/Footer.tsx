@@ -15,7 +15,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
   return (
     <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {/* Brand */}
           <div className="sm:col-span-2 md:col-span-2 space-y-4">
             <div className="flex items-center space-x-2">
@@ -84,6 +84,63 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   Supported Formats
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Popular Converters */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3">
+              Converters
+            </h4>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <button
+                  onClick={() => handleNav('png-to-jpg')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  PNG to JPG
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('jpg-to-png')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  JPG to PNG
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('png-to-webp')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  PNG to WebP
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('webp-to-png')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  WebP to PNG
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('jpg-to-webp')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  JPG to WebP
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('png-to-ico')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  PNG to ICO Favicon
                 </button>
               </li>
             </ul>

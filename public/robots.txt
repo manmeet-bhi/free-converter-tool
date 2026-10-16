@@ -1,0 +1,8 @@
+# Robots.txt for ImageKit
+# Allow search engines full access to public landing pages
+
+User-agent: *
+Allow: /
+
+# Sitemap Index
+Sitemap: https://freeconvertertool.netlify.app/sitemap.xml

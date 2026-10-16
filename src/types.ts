@@ -13,7 +13,14 @@ export type ActiveTab =
   | 'about' 
   | 'contact' 
   | 'terms' 
-  | 'cookies';
+  | 'cookies'
+  | 'png-to-jpg'
+  | 'jpg-to-png'
+  | 'png-to-webp'
+  | 'webp-to-png'
+  | 'jpg-to-webp'
+  | 'webp-to-jpg'
+  | 'png-to-ico';
 
 export interface ImageItem {
   id: string;

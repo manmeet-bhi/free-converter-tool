@@ -19,6 +19,10 @@ import { AboutView } from './views/AboutView';
 import { ContactView } from './views/ContactView';
 import { TermsView } from './views/TermsView';
 import { CookiePolicyView } from './views/CookiePolicyView';
+import { ToolLandingView } from './views/ToolLandingView';
+import { TOOL_LANDING_CONFIGS } from './config/landingPages';
+import { getPageMetadata } from './config/seo';
+import { updatePageSEO } from './utils/seo';
 import { loadImageFromFile, revokeUrl } from './utils/imageProcessor';
 import { detectInputFormat } from './utils/formatSupport';
 
@@ -26,8 +30,11 @@ const SLUG_TO_TAB: Record<string, ActiveTab> = {
   '/': 'home',
   '/home': 'home',
   '/converter': 'converter',
+  '/image-converter': 'converter',
   '/compressor': 'compressor',
+  '/image-compressor': 'compressor',
   '/resizer': 'resizer',
+  '/resize-image': 'resizer',
   '/format': 'formats',
   '/formats': 'formats',
   '/features': 'features',
@@ -38,6 +45,14 @@ const SLUG_TO_TAB: Record<string, ActiveTab> = {
   '/terms': 'terms',
   '/cookie': 'cookies',
   '/cookies': 'cookies',
+  // Specific SEO conversion landing pages
+  '/png-to-jpg': 'png-to-jpg',
+  '/jpg-to-png': 'jpg-to-png',
+  '/png-to-webp': 'png-to-webp',
+  '/webp-to-png': 'webp-to-png',
+  '/jpg-to-webp': 'jpg-to-webp',
+  '/webp-to-jpg': 'webp-to-jpg',
+  '/png-to-ico': 'png-to-ico',
 };
 
 const TAB_TO_SLUG: Record<ActiveTab, string> = {
@@ -53,6 +68,13 @@ const TAB_TO_SLUG: Record<ActiveTab, string> = {
   privacy: '/privacy',
   terms: '/terms',
   cookies: '/cookie',
+  'png-to-jpg': '/png-to-jpg',
+  'jpg-to-png': '/jpg-to-png',
+  'png-to-webp': '/png-to-webp',
+  'webp-to-png': '/webp-to-png',
+  'jpg-to-webp': '/jpg-to-webp',
+  'webp-to-jpg': '/webp-to-jpg',
+  'png-to-ico': '/png-to-ico',
 };
 
 function getTabFromPath(): ActiveTab {
@@ -108,23 +130,13 @@ export default function App() {
 
   const toggleTheme = () => setIsDark((prev) => !prev);
 
-  // Sync document title dynamically based on active tab
+  // Sync full SEO metadata, Canonical URL, Open Graph, and JSON-LD structured data dynamically
   useEffect(() => {
-    const titles: Record<ActiveTab, string> = {
-      home: 'ImageKit – Free Browser-Based Image Converter & Compressor',
-      converter: 'Image Converter – Convert JPG, PNG, WebP, BMP, ICO | ImageKit',
-      compressor: 'Image Compressor – Reduce Image File Size with Target Mode | ImageKit',
-      resizer: 'Image Resizer – Scale by Pixels, Ratio & Social Presets | ImageKit',
-      features: 'Features & Architecture | ImageKit',
-      formats: 'Supported Image Formats & Browser Matrix | ImageKit',
-      privacy: 'Privacy Policy | ImageKit (Free Converter Tool)',
-      faq: 'Frequently Asked Questions | ImageKit',
-      about: 'About Us | ImageKit (Free Converter Tool)',
-      contact: 'Contact Us & Support | ImageKit',
-      terms: 'Terms of Service | ImageKit',
-      cookies: 'Cookie & Storage Policy | ImageKit',
-    };
-    document.title = titles[activeTab] || 'ImageKit';
+    const slug = TAB_TO_SLUG[activeTab] || '/';
+    const metadata = getPageMetadata(slug);
+    const landingConfig = TOOL_LANDING_CONFIGS[activeTab];
+    const faqs = landingConfig?.faqs;
+    updatePageSEO(metadata, faqs);
   }, [activeTab]);
 
   // Clean up object URLs when component unmounts
@@ -243,6 +255,17 @@ export default function App() {
         {activeTab === 'terms' && <TermsView />}
 
         {activeTab === 'cookies' && <CookiePolicyView />}
+
+        {/* Dedicated SEO Landing Pages for Conversion Pairs */}
+        {TOOL_LANDING_CONFIGS[activeTab] && (
+          <ToolLandingView
+            config={TOOL_LANDING_CONFIGS[activeTab]}
+            images={images}
+            setImages={setImages}
+            onFilesSelected={handleFilesSelected}
+            setActiveTab={setActiveTab}
+          />
+        )}
 
       </main>
 
