@@ -229,7 +229,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'formats' && <FormatsView />}
+        {activeTab === 'formats' && <FormatsView setActiveTab={setActiveTab} />}
 
         {activeTab === 'features' && <FeaturesView setActiveTab={setActiveTab} />}
 
