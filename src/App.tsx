@@ -7,7 +7,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ActiveTab, ImageItem } from './types';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { AdBanner } from './components/AdBanner';
 import { HomeView } from './views/HomeView';
 import { ConverterView } from './views/ConverterView';
 import { CompressorView } from './views/CompressorView';
@@ -245,10 +244,6 @@ export default function App() {
 
         {activeTab === 'cookies' && <CookiePolicyView />}
 
-        {/* Responsive Google AdSense Container */}
-        <div className="max-w-6xl mx-auto px-4">
-          <AdBanner />
-        </div>
       </main>
 
       <Footer setActiveTab={setActiveTab} />

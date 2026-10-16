@@ -23,8 +23,8 @@ ImageKit is a fast, 100% private, client-side web utility for converting, compre
   - Clean client-side routes: `/home`, `/converter`, `/compressor`, `/resizer`, `/format`, `/about`, `/contact`, `/privacy`, `/terms`, `/cookie`.
 - **Preloader & Lightweight Animations**:
   - Zero-overhead CSS preloader and micro-animations for high performance.
-- **Google Analytics & AdSense Ready**:
-  - Pre-configured script hooks in `index.html` and responsive `AdBanner` component.
+- **Google Analytics Ready**:
+  - Pre-configured script hooks in `index.html`.
 
 ---
 
