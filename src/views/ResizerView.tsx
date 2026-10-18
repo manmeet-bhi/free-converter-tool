@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ImageItem } from '../types';
 import { DropZone } from '../components/DropZone';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
+import { ConversionProgressBar } from '../components/ConversionProgressBar';
 import { 
   getAvailableOutputFormats, 
   ImageFormat 
@@ -24,8 +25,11 @@ import {
   Sliders, 
   Eye, 
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Plus,
+  Crop
 } from 'lucide-react';
+import { ImageEditorModal } from '../components/ImageEditorModal';
 import confetti from 'canvas-confetti';
 
 interface ResizerViewProps {
@@ -63,6 +67,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
   onFilesSelected,
 }) => {
   const availableFormats = getAvailableOutputFormats();
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
   const [targetWidth, setTargetWidth] = useState<number>(1200);
   const [targetHeight, setTargetHeight] = useState<number>(800);
   const [maintainAspect, setMaintainAspect] = useState<boolean>(true);
@@ -70,7 +75,12 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
   const [selectedFormat, setSelectedFormat] = useState<ImageFormat>('webp');
   const [quality, setQuality] = useState<number>(0.85);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [resizingFileName, setResizingFileName] = useState<string>('');
+  const [completedResizeCount, setCompletedResizeCount] = useState<number>(0);
   const [isZipping, setIsZipping] = useState<boolean>(false);
+
+  // Image Editor Modal state
+  const [editingItem, setEditingItem] = useState<ImageItem | null>(null);
 
   // Sync initial dimensions with first image if available
   useEffect(() => {
@@ -141,6 +151,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
         width: finalW,
         height: finalH,
         backgroundColor: item.backgroundColor,
+        originalSizeBytes: item.originalSize,
       });
 
       // Update filename extension
@@ -176,9 +187,14 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
   // Resize all images in queue
   const handleResizeAll = async () => {
     setIsProcessing(true);
-    for (const item of images) {
+    setCompletedResizeCount(0);
+    for (let i = 0; i < images.length; i++) {
+      const item = images[i];
+      setResizingFileName(item.customFilename);
       await resizeSingleItem(item, targetWidth, targetHeight);
+      setCompletedResizeCount(i + 1);
     }
+    setResizingFileName('');
     setIsProcessing(false);
     confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
   };
@@ -208,6 +224,21 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
   return (
     <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+      {/* Hidden file input for adding more images */}
+      <input
+        ref={addMoreInputRef}
+        type="file"
+        multiple
+        accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.svg,.ico"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            onFilesSelected(Array.from(e.target.files));
+            e.target.value = '';
+          }
+        }}
+        className="hidden"
+      />
+
       {/* View Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
@@ -224,10 +255,25 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
         {images.length > 0 && (
           <div className="flex items-center space-x-2">
+            {images.length < 20 ? (
+              <button
+                onClick={() => addMoreInputRef.current?.click()}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold bg-cyan-50 dark:bg-cyan-950/70 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/60 border border-cyan-200 dark:border-cyan-900 transition-colors"
+                title="Add more images to resize"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add More</span>
+              </button>
+            ) : (
+              <span className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                Max Limit (20/20)
+              </span>
+            )}
             <button
               onClick={() => {
                 images.forEach((item) => {
                   if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
+                  if (item.originalInfo.previewUrl) revokeUrl(item.originalInfo.previewUrl);
                 });
                 setImages([]);
               }}
@@ -240,12 +286,25 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
         )}
       </div>
 
-      {/* Upload Zone */}
-      <DropZone
-        onFilesSelected={onFilesSelected}
-        title="Add images to resize"
-        subtitle="Batch resize photos for Instagram, Twitter/X, web performance or icons."
-        compact={images.length > 0}
+      {/* Upload Zone: Shown ONLY when NO images are loaded, strictly hidden when image(s) exist */}
+      {images.length === 0 && (
+        <div className="pt-4 max-w-2xl mx-auto w-full">
+          <DropZone
+            onFilesSelected={onFilesSelected}
+            title="Drop images here to start"
+            subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
+          />
+        </div>
+      )}
+
+      {/* Batch Resizing Preloader & Progress Bar */}
+      <ConversionProgressBar
+        isProcessing={isProcessing}
+        totalCount={images.length}
+        completedCount={completedResizeCount || completedCount}
+        currentFileName={resizingFileName}
+        targetFormat={selectedFormat}
+        actionLabel="Resizing"
       />
 
       {images.length > 0 && (
@@ -396,24 +455,32 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="space-y-2.5 pt-2">
+            <div className="flex items-center space-x-2 pt-2">
               <button
                 onClick={handleResizeAll}
                 disabled={isProcessing}
-                className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl text-base font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-md hover:shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all active:scale-98"
+                className="flex-1 inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl text-base font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-md hover:shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all active:scale-98"
               >
                 <RefreshCw className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
-                <span>{isProcessing ? 'Resizing...' : `Resize All (${images.length})`}</span>
+                <span>{isProcessing ? 'Resizing...' : images.length > 1 ? `Resize All (${images.length})` : 'Resize'}</span>
               </button>
 
               {completedCount > 0 && (
                 <button
                   onClick={handleDownloadAllZip}
                   disabled={isZipping}
-                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98"
+                  className="relative p-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center group flex-shrink-0"
+                  title={isZipping ? 'Archiving ZIP...' : `Download all (${completedCount}) resized images as ZIP`}
+                  aria-label={isZipping ? 'Archiving ZIP...' : `Download all (${completedCount}) resized images as ZIP`}
                 >
-                  <Archive className="w-5 h-5" />
-                  <span>Download All Resized ({completedCount} ZIP)</span>
+                  {isZipping ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Archive className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-slate-900 dark:bg-slate-950 text-emerald-400 border border-emerald-500/60 shadow-xs uppercase tracking-tight">
+                    {isZipping ? '...' : `${completedCount > 1 ? completedCount : ''}ZIP`}
+                  </span>
                 </button>
               )}
             </div>
@@ -435,7 +502,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                   <div className="flex items-center space-x-4 min-w-0">
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0 bg-checkerboard-light dark:bg-checkerboard-dark flex items-center justify-center">
                       <img
-                        src={item.result?.previewUrl || item.originalInfo.cleanedSvgUrl || URL.createObjectURL(item.file)}
+                        src={item.result?.previewUrl || item.originalInfo.previewUrl}
                         alt={item.customFilename}
                         className="max-w-full max-h-full object-contain"
                       />
@@ -463,13 +530,25 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
 
                   {/* Individual actions */}
                   <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    {/* Edit (Crop, Rotate, Flip) button */}
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(item)}
+                      className="inline-flex items-center space-x-1 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                      title="Edit image (Crop, Rotate, Flip)"
+                    >
+                      <Crop className="w-3.5 h-3.5 text-cyan-500" />
+                      <span>Edit</span>
+                    </button>
+
                     {item.result ? (
                       <button
                         onClick={() => downloadBlob(item.result!.blob, item.customFilename)}
-                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95"
+                        className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                        title={`Download ${item.customFilename}`}
+                        aria-label={`Download ${item.customFilename}`}
                       >
                         <Download className="w-4 h-4" />
-                        <span>Download</span>
                       </button>
                     ) : (
                       <button
@@ -478,16 +557,52 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                         className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm disabled:opacity-50 transition-all active:scale-95"
                       >
                         <RefreshCw className={`w-4 h-4 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
-                        <span>Resize</span>
+                        <span>{item.status === 'processing' ? 'Resizing...' : 'Resize'}</span>
                       </button>
                     )}
                   </div>
                 </div>
+
+                {/* Item-level Resizing Preloader & Progress Bar */}
+                {item.status === 'processing' && (
+                  <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 animate-fade-in">
+                    <div className="flex items-center justify-between text-xs text-cyan-600 dark:text-cyan-400 font-bold">
+                      <span className="flex items-center space-x-2">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-500" />
+                        <span>Resizing canvas dimensions to {targetWidth}×{targetHeight} px...</span>
+                      </span>
+                      <span className="animate-pulse">Active</span>
+                    </div>
+                    <div 
+                      className="w-full bg-slate-200 dark:bg-slate-800 rounded-md h-3.5 p-0.5 overflow-hidden shadow-inner border border-slate-300 dark:border-slate-700"
+                      role="progressbar"
+                      aria-label={`Resizing ${item.customFilename}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div className="bg-cyan-600 dark:bg-cyan-500 h-full rounded-xs w-full relative overflow-hidden shadow-xs">
+                        <div className="absolute inset-x-0 top-0 h-1/2 bg-white/25 rounded-t-xs" />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Image Editor Modal (Crop, Rotate, Flip) */}
+      <ImageEditorModal
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        imageItem={editingItem}
+        onSave={(updatedItem) => {
+          setImages((prev) =>
+            prev.map((img) => (img.id === updatedItem.id ? updatedItem : img))
+          );
+        }}
+      />
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ImageItem } from '../types';
 import { DropZone } from '../components/DropZone';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
+import { ConversionProgressBar } from '../components/ConversionProgressBar';
 import { 
   getAvailableOutputFormats, 
   ImageFormat, 
@@ -24,8 +25,11 @@ import {
   Check, 
   Sliders, 
   Eye, 
-  Edit2
+  Edit2,
+  Plus,
+  Crop
 } from 'lucide-react';
+import { ImageEditorModal } from '../components/ImageEditorModal';
 import confetti from 'canvas-confetti';
 
 interface ConverterViewProps {
@@ -45,6 +49,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 }) => {
   const availableFormats = getAvailableOutputFormats();
   const [batchTargetFormat, setBatchTargetFormat] = useState<ImageFormat>(defaultFormat);
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (defaultFormat) {
@@ -53,6 +58,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   }, [defaultFormat]);
   const [batchQuality, setBatchQuality] = useState<number>(0.85);
   const [isProcessingAll, setIsProcessingAll] = useState<boolean>(false);
+  const [convertingFileName, setConvertingFileName] = useState<string>('');
   const [isZipping, setIsZipping] = useState<boolean>(false);
   const [zipProgress, setZipProgress] = useState<number>(0);
 
@@ -68,6 +74,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
     onDownload?: () => void;
   } | null>(null);
 
+  // Image Editor Modal state
+  const [editingItem, setEditingItem] = useState<ImageItem | null>(null);
+
   // Apply batch target format to all images
   const handleApplyBatchFormat = (fmt: ImageFormat) => {
     setBatchTargetFormat(fmt);
@@ -78,10 +87,15 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         const lastDot = currentName.lastIndexOf('.');
         const base = lastDot !== -1 ? currentName.slice(0, lastDot) : currentName;
         const targetExt = fmt === 'jpeg' ? '.jpg' : `.${fmt}`;
+        if (item.result?.previewUrl) {
+          revokeUrl(item.result.previewUrl);
+        }
         return {
           ...item,
           targetFormat: fmt,
           customFilename: `${base}${targetExt}`,
+          status: 'idle',
+          result: undefined,
         };
       })
     );
@@ -108,6 +122,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         width: item.targetWidth,
         height: item.targetHeight,
         backgroundColor: item.backgroundColor,
+        originalSizeBytes: item.originalSize,
       });
 
       setImages((prev) =>
@@ -125,10 +140,12 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   const handleConvertAll = async () => {
     setIsProcessingAll(true);
     for (const item of images) {
-      if (item.status !== 'processing') {
+      if (item.status !== 'done') {
+        setConvertingFileName(item.customFilename);
         await convertSingleImage(item.id);
       }
     }
+    setConvertingFileName('');
     setIsProcessingAll(false);
     confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
   };
@@ -161,6 +178,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   const handleRemoveImage = (id: string) => {
     const item = images.find((i) => i.id === id);
     if (item?.result?.previewUrl) revokeUrl(item.result.previewUrl);
+    if (item?.originalInfo.previewUrl) revokeUrl(item.originalInfo.previewUrl);
     setImages((prev) => prev.filter((i) => i.id !== id));
   };
 
@@ -168,6 +186,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   const handleClearAll = () => {
     images.forEach((item) => {
       if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
+      if (item.originalInfo.previewUrl) revokeUrl(item.originalInfo.previewUrl);
     });
     setImages([]);
   };
@@ -176,6 +195,21 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
   return (
     <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+      {/* Hidden file input for Adding More Images when images are in queue */}
+      <input
+        ref={addMoreInputRef}
+        type="file"
+        multiple
+        accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.svg,.ico"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            onFilesSelected(Array.from(e.target.files));
+            e.target.value = '';
+          }
+        }}
+        className="hidden"
+      />
+
       {/* View Header */}
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
@@ -187,12 +221,26 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
               <span>Image Converter</span>
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Convert any image to WebP, PNG, JPG, BMP, or ICO in batch with full privacy.
+              Convert any image to WebP, AVIF, PNG, JPG, GIF, SVG, BMP, or ICO in batch with full privacy.
             </p>
           </div>
 
           {images.length > 0 && (
             <div className="flex items-center space-x-2">
+              {images.length < 20 ? (
+                <button
+                  onClick={() => addMoreInputRef.current?.click()}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-900 transition-colors"
+                  title="Add more images to the conversion queue"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add More</span>
+                </button>
+              ) : (
+                <span className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                  Max Limit (20/20)
+                </span>
+              )}
               <button
                 onClick={handleClearAll}
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -206,23 +254,58 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
       )}
 
       {hideHeader && images.length > 0 && (
-        <div className="flex justify-end border-b border-slate-200 dark:border-slate-800 pb-4">
-          <button
-            onClick={handleClearAll}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Clear Queue</span>
-          </button>
+        <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              {images.length} Image{images.length > 1 ? 's' : ''} in Queue
+            </span>
+            {images.length >= 20 && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                Max 20 Reached
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {images.length < 20 && (
+              <button
+                onClick={() => addMoreInputRef.current?.click()}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-900 transition-colors"
+                title="Add more images to the conversion queue"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add More</span>
+              </button>
+            )}
+            <button
+              onClick={handleClearAll}
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Clear Queue</span>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Main Upload Zone */}
-      <DropZone
-        onFilesSelected={onFilesSelected}
-        title="Add images to convert"
-        subtitle="Drag & drop multiple files, or click to browse. Images are processed locally."
-        compact={images.length > 0}
+      {/* Main Upload Zone: Shown ONLY when NO images are loaded, strictly hidden when image(s) exist */}
+      {images.length === 0 && (
+        <div className="pt-4 max-w-2xl mx-auto w-full">
+          <DropZone
+            onFilesSelected={onFilesSelected}
+            title="Drop images here to start"
+            subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
+          />
+        </div>
+      )}
+
+      {/* Batch Conversion Preloader & Progress Bar */}
+      <ConversionProgressBar
+        isProcessing={isProcessingAll}
+        totalCount={images.length}
+        completedCount={completedCount}
+        currentFileName={convertingFileName}
+        targetFormat={batchTargetFormat}
+        actionLabel="Converting"
       />
 
       {/* Batch Control Toolbar */}
@@ -232,7 +315,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-blue-500" />
-                <span>Convert All To:</span>
+                <span>{images.length > 1 ? 'Convert All To:' : 'Convert To:'}</span>
               </span>
 
               {/* Format selection chips */}
@@ -280,24 +363,32 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                 className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all active:scale-98"
               >
                 <RefreshCw className={`w-5 h-5 ${isProcessingAll ? 'animate-spin' : ''}`} />
-                <span>{isProcessingAll ? 'Converting...' : `Convert All (${images.length})`}</span>
+                <span>{isProcessingAll ? 'Converting...' : images.length > 1 ? `Convert All (${images.length})` : 'Convert'}</span>
               </button>
 
               {completedCount > 0 && (
                 <button
                   onClick={handleDownloadAllZip}
                   disabled={isZipping}
-                  className="flex-1 md:flex-none inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all active:scale-98"
+                  className="relative p-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center group flex-shrink-0"
+                  title={isZipping ? `Archiving (${zipProgress}%)...` : `Download all (${completedCount}) converted images as ZIP`}
+                  aria-label={isZipping ? `Archiving (${zipProgress}%)...` : `Download all (${completedCount}) converted images as ZIP`}
                 >
-                  <Archive className="w-5 h-5" />
-                  <span>{isZipping ? `Archiving (${zipProgress}%)...` : `Download All (${completedCount} ZIP)`}</span>
+                  {isZipping ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Archive className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-slate-900 dark:bg-slate-950 text-emerald-400 border border-emerald-500/60 shadow-xs uppercase tracking-tight">
+                    {isZipping ? `${zipProgress}%` : `${completedCount > 1 ? completedCount : ''}ZIP`}
+                  </span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Quality slider for lossy batch formats */}
-          {(batchTargetFormat === 'jpeg' || batchTargetFormat === 'webp') && (
+          {/* Quality slider for lossy batch formats & optimized PNG */}
+          {(batchTargetFormat === 'jpeg' || batchTargetFormat === 'webp' || batchTargetFormat === 'avif' || batchTargetFormat === 'png') && (
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
               <div className="flex items-center space-x-3">
                 <span className="font-bold text-slate-700 dark:text-slate-300">
@@ -320,10 +411,6 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   {Math.round(batchQuality * 100)}%
                 </span>
               </div>
-
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Higher quality preserves fine textures; lower quality decreases file size.
-              </span>
             </div>
           )}
         </div>
@@ -357,7 +444,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   <div
                     onClick={() =>
                       setModalItem({
-                        url: item.result?.previewUrl || item.originalInfo.cleanedSvgUrl || URL.createObjectURL(item.file),
+                        url: item.result?.previewUrl || item.originalInfo.previewUrl,
                         filename: item.customFilename,
                         width: item.result?.width || item.originalDimensions.width,
                         height: item.result?.height || item.originalDimensions.height,
@@ -373,7 +460,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                     title="Click to view full image"
                   >
                     <img
-                      src={item.result?.previewUrl || item.originalInfo.cleanedSvgUrl || URL.createObjectURL(item.file)}
+                      src={item.result?.previewUrl || item.originalInfo.previewUrl}
                       alt={item.file.name}
                       className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform"
                     />
@@ -471,13 +558,25 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
                   {/* Actions */}
                   <div className="flex items-center space-x-2">
+                    {/* Edit (Crop, Rotate, Flip) button */}
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(item)}
+                      className="inline-flex items-center space-x-1 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                      title="Edit image (Crop, Rotate, Flip)"
+                    >
+                      <Crop className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Edit</span>
+                    </button>
+
                     {item.status === 'done' && item.result ? (
                       <button
                         onClick={() => downloadBlob(item.result!.blob, item.customFilename)}
-                        className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95"
+                        className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                        title={`Download ${item.customFilename}`}
+                        aria-label={`Download ${item.customFilename}`}
                       >
                         <Download className="w-4 h-4" />
-                        <span>Download</span>
                       </button>
                     ) : (
                       <button
@@ -500,6 +599,30 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Item-level Conversion Preloader & Progress Bar */}
+              {item.status === 'processing' && (
+                <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-bold">
+                    <span className="flex items-center space-x-2">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-500" />
+                      <span>Converting to {item.targetFormat.toUpperCase()}...</span>
+                    </span>
+                    <span className="animate-pulse">Active</span>
+                  </div>
+                  <div 
+                    className="w-full bg-slate-200 dark:bg-slate-800 rounded-md h-3.5 p-0.5 overflow-hidden shadow-inner border border-slate-300 dark:border-slate-700"
+                    role="progressbar"
+                    aria-label={`Converting ${item.customFilename}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div className="bg-blue-600 dark:bg-blue-500 h-full rounded-xs w-full relative overflow-hidden shadow-xs">
+                      <div className="absolute inset-x-0 top-0 h-1/2 bg-white/25 rounded-t-xs" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Transparency Warning Notice for JPEG/BMP */}
               {hasTransparencyWarning && (
@@ -556,6 +679,18 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
           onDownload={modalItem.onDownload}
         />
       )}
+
+      {/* Image Editor Modal (Crop, Rotate, Flip) */}
+      <ImageEditorModal
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        imageItem={editingItem}
+        onSave={(updatedItem) => {
+          setImages((prev) =>
+            prev.map((img) => (img.id === updatedItem.id ? updatedItem : img))
+          );
+        }}
+      />
     </div>
   );
 };

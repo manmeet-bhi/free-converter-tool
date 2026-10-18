@@ -33,14 +33,11 @@ const routes = [
   { path: '/png-to-ico', priority: '0.85', changefreq: 'weekly' },
   { path: '/image-compressor', priority: '0.9', changefreq: 'weekly' },
   { path: '/resize-image', priority: '0.85', changefreq: 'weekly' },
-  { path: '/format', priority: '0.7', changefreq: 'monthly' },
-  { path: '/features', priority: '0.6', changefreq: 'monthly' },
+  { path: '/exif-remover', priority: '0.85', changefreq: 'weekly' },
   { path: '/faq', priority: '0.6', changefreq: 'monthly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
   { path: '/contact', priority: '0.5', changefreq: 'monthly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
-  { path: '/terms', priority: '0.3', changefreq: 'yearly' },
-  { path: '/cookie', priority: '0.3', changefreq: 'yearly' },
 ];
 
 function generateSitemapXml() {

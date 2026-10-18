@@ -87,13 +87,10 @@ ImageKit includes dedicated, high-intent landing pages for all supported formats
 | `/image-compressor` | Online Image Compressor | Image Compressor | `0.9` |
 | `/resize-image` | Online Image Resizer | Image Resizer | `0.85` |
 | `/format` | Supported Image Formats | Formats Matrix | `0.7` |
-| `/features` | Features & Engine Architecture | Features View | `0.6` |
 | `/about` | About ImageKit | About Us | `0.5` |
 | `/faq` | Frequently Asked Questions | FAQ Knowledge Base | `0.6` |
 | `/contact` | Contact Us & Support | Contact Form | `0.5` |
 | `/privacy` | Privacy Policy | Legal Privacy View | `0.3` |
-| `/terms` | Terms of Service | Legal Terms View | `0.3` |
-| `/cookie` | Cookie & Storage Policy | Cookie Policy View | `0.3` |
 
 ---
 
@@ -253,5 +250,5 @@ Search engines reward fast, responsive web applications:
 ## 10. Privacy & Quality Compliance
 
 - **No Cloaking or Doorways**: Every landing page contains real, functional conversion tools.
-- **Accurate Claims**: Only formats that genuinely work (WebP, JPG, PNG, BMP, ICO) are listed.
+- **Accurate Claims**: Only formats that genuinely work (WebP, AVIF, JPG, PNG, GIF, SVG, BMP, ICO) are listed.
 - **User Image Protection**: Images never leave the user's browser, satisfying strict GDPR, CCPA, and enterprise privacy standards.

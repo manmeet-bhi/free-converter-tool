@@ -6,6 +6,9 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    optimizeDeps: {
+      exclude: ['@jsquash/avif'],
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('.', import.meta.url)),

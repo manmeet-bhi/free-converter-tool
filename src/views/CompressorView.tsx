@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ImageItem, CompressionPreset } from '../types';
 import { DropZone } from '../components/DropZone';
 import { CompareSlider } from '../components/CompareSlider';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
+import { ConversionProgressBar } from '../components/ConversionProgressBar';
 import { 
   getAvailableOutputFormats, 
   ImageFormat, 
@@ -28,8 +29,11 @@ import {
   AlertTriangle, 
   Sparkles,
   CheckCircle2,
-  Target
+  Target,
+  Plus,
+  Crop
 } from 'lucide-react';
+import { ImageEditorModal } from '../components/ImageEditorModal';
 import confetti from 'canvas-confetti';
 
 interface CompressorViewProps {
@@ -44,9 +48,10 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
   onFilesSelected,
 }) => {
   const availableFormats = getAvailableOutputFormats().filter(
-    (f) => f.id === 'jpeg' || f.id === 'webp' || f.id === 'png'
+    (f) => f.id === 'jpeg' || f.id === 'webp' || f.id === 'png' || f.id === 'avif'
   );
 
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<CompressionPreset>('balanced');
   const [quality, setQuality] = useState<number>(0.75);
@@ -56,6 +61,8 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
   const [targetSizeUnit, setTargetSizeUnit] = useState<'KB' | 'MB'>('KB');
   const [resizePercent, setResizePercent] = useState<number>(100);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [compressingFileName, setCompressingFileName] = useState<string>('');
+  const [completedCompressCount, setCompletedCompressCount] = useState<number>(0);
   const [isZipping, setIsZipping] = useState<boolean>(false);
 
   // Lightbox modal state
@@ -69,6 +76,9 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
     hasTransparency?: boolean;
     onDownload?: () => void;
   } | null>(null);
+
+  // Image Editor Modal state
+  const [editingItem, setEditingItem] = useState<ImageItem | null>(null);
 
   // Sync active image if none selected
   useEffect(() => {
@@ -125,6 +135,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
         height: targetH,
         backgroundColor: item.backgroundColor,
         targetSizeBytes: targetBytes,
+        originalSizeBytes: item.originalSize,
       });
 
       // Update filename extension if format changed
@@ -144,8 +155,8 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                 targetFormat,
                 targetQuality: quality,
                 customFilename: newFilename,
-                targetWidth: targetW,
-                targetHeight: targetH,
+                targetWidth: result.width,
+                targetHeight: result.height,
               }
             : i
         )
@@ -162,16 +173,23 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
   const handleCompressActive = async () => {
     if (!activeImage) return;
     setIsProcessing(true);
+    setCompressingFileName(activeImage.customFilename);
     await compressItem(activeImage);
+    setCompressingFileName('');
     setIsProcessing(false);
   };
 
   // Compress all images in queue
   const handleCompressAll = async () => {
     setIsProcessing(true);
-    for (const item of images) {
+    setCompletedCompressCount(0);
+    for (let i = 0; i < images.length; i++) {
+      const item = images[i];
+      setCompressingFileName(item.customFilename);
       await compressItem(item);
+      setCompletedCompressCount(i + 1);
     }
+    setCompressingFileName('');
     setIsProcessing(false);
     confetti({ particleCount: 50, spread: 70, origin: { y: 0.8 } });
   };
@@ -200,6 +218,21 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
 
   return (
     <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+      {/* Hidden file input for adding more images */}
+      <input
+        ref={addMoreInputRef}
+        type="file"
+        multiple
+        accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.svg,.ico"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            onFilesSelected(Array.from(e.target.files));
+            e.target.value = '';
+          }
+        }}
+        className="hidden"
+      />
+
       {/* View Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
@@ -216,10 +249,25 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
 
         {images.length > 0 && (
           <div className="flex items-center space-x-2">
+            {images.length < 20 ? (
+              <button
+                onClick={() => addMoreInputRef.current?.click()}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-900 transition-colors"
+                title="Add more images to compress"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add More</span>
+              </button>
+            ) : (
+              <span className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                Max Limit (20/20)
+              </span>
+            )}
             <button
               onClick={() => {
                 images.forEach((item) => {
                   if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
+                  if (item.originalInfo.previewUrl) revokeUrl(item.originalInfo.previewUrl);
                 });
                 setImages([]);
               }}
@@ -232,12 +280,25 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
         )}
       </div>
 
-      {/* Upload Zone */}
-      <DropZone
-        onFilesSelected={onFilesSelected}
-        title="Add images to compress"
-        subtitle="Upload JPG, PNG, or WebP images. Real-time in-browser compression."
-        compact={images.length > 0}
+      {/* Upload Zone: Shown ONLY when NO images are loaded, strictly hidden when image(s) exist */}
+      {images.length === 0 && (
+        <div className="pt-4 max-w-2xl mx-auto w-full">
+          <DropZone
+            onFilesSelected={onFilesSelected}
+            title="Drop images here to start"
+            subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
+          />
+        </div>
+      )}
+
+      {/* Batch Compression Preloader & Progress Bar */}
+      <ConversionProgressBar
+        isProcessing={isProcessing}
+        totalCount={images.length}
+        completedCount={completedCompressCount || completedCount}
+        currentFileName={compressingFileName || activeImage?.customFilename}
+        targetFormat={targetFormat}
+        actionLabel="Compressing"
       />
 
       {images.length > 0 && activeImage && (
@@ -303,53 +364,36 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                   );
                 })}
               </div>
-
-              {/* Status and guidance messages for formats */}
-              {targetFormat === 'webp' && (
-                <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5 font-medium">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>WebP 25-35% high efficiency compression with full alpha transparency.</span>
-                </div>
-              )}
-
-              {targetFormat === 'png' && (
-                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center space-x-1.5 font-medium">
-                  <Info className="w-4 h-4 shrink-0" />
-                  <span>PNG is lossless. To achieve dramatic 60-80% file size reduction, choose WebP.</span>
-                </p>
-              )}
             </div>
 
-            {/* Quality Slider (for lossy formats) */}
-            {targetFormat !== 'png' && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                    Quality Level:
-                  </span>
-                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-base">
-                    {Math.round(quality * 100)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.02"
-                  value={quality}
-                  onChange={(e) => {
-                    setQuality(parseFloat(e.target.value));
-                    setSelectedPreset('custom');
-                  }}
-                  className="w-full accent-indigo-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-slate-400 font-mono">
-                  <span>Smallest Size (10%)</span>
-                  <span>Balanced (75%)</span>
-                  <span>Best Quality (100%)</span>
-                </div>
+            {/* Quality Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Quality Level:
+                </span>
+                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-base">
+                  {Math.round(quality * 100)}%
+                </span>
               </div>
-            )}
+              <input
+                type="range"
+                min="0.1"
+                max="1.0"
+                step="0.02"
+                value={quality}
+                onChange={(e) => {
+                  setQuality(parseFloat(e.target.value));
+                  setSelectedPreset('custom');
+                }}
+                className="w-full accent-indigo-600 cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-slate-400 font-mono">
+                <span>Smallest Size (10%)</span>
+                <span>Balanced (75%)</span>
+                <span>Best Quality (100%)</span>
+              </div>
+            </div>
 
             {/* Target File Size Control (Binary search optimizer) */}
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-3">
@@ -424,12 +468,6 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
               </div>
             </div>
 
-            {/* Metadata stripping note */}
-            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center space-x-1.5 pt-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Canvas re-encoding automatically strips unnecessary EXIF metadata.</span>
-            </div>
-
             {/* Action Buttons */}
             <div className="space-y-2.5 pt-2">
               <button
@@ -438,7 +476,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                 className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl text-base font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all active:scale-98"
               >
                 <RefreshCw className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
-                <span>{isProcessing ? 'Optimizing...' : 'Compress Active Image'}</span>
+                <span>{isProcessing ? 'Optimizing...' : images.length > 1 ? 'Compress Active Image' : 'Compress'}</span>
               </button>
 
               {images.length > 1 && (
@@ -476,7 +514,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                         title={item.customFilename}
                       >
                         <img
-                          src={item.result?.previewUrl || item.originalInfo.cleanedSvgUrl || URL.createObjectURL(item.file)}
+                          src={item.result?.previewUrl || item.originalInfo.previewUrl}
                           alt={item.file.name}
                           className="w-full h-full object-cover rounded-lg"
                         />
@@ -502,15 +540,28 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                   </p>
                 </div>
 
-                {activeImage.result && (
+                <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => downloadBlob(activeImage.result!.blob, activeImage.customFilename)}
-                    className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all active:scale-98"
+                    type="button"
+                    onClick={() => setEditingItem(activeImage)}
+                    className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                    title="Edit image (Crop, Rotate, Flip)"
                   >
-                    <Download className="w-4 h-4" />
-                    <span>Download Compressed</span>
+                    <Crop className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Edit Image</span>
                   </button>
-                )}
+
+                  {activeImage.result && (
+                    <button
+                      onClick={() => downloadBlob(activeImage.result!.blob, activeImage.customFilename)}
+                      className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all active:scale-98 flex items-center justify-center"
+                      title={`Download ${activeImage.customFilename}`}
+                      aria-label={`Download ${activeImage.customFilename}`}
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Compression Metric Cards */}
@@ -558,7 +609,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
               {/* Before / After Comparison Slider */}
               {activeImage.result ? (
                 <CompareSlider
-                  originalUrl={activeImage.originalInfo.cleanedSvgUrl || URL.createObjectURL(activeImage.file)}
+                  originalUrl={activeImage.originalInfo.previewUrl}
                   processedUrl={activeImage.result.previewUrl}
                   originalLabel="Original"
                   processedLabel={`Compressed (${targetFormat.toUpperCase()})`}
@@ -569,7 +620,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
               ) : (
                 <div className="h-64 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-900/50">
                   <img
-                    src={activeImage.originalInfo.cleanedSvgUrl || URL.createObjectURL(activeImage.file)}
+                    src={activeImage.originalInfo.previewUrl}
                     alt={activeImage.customFilename}
                     className="max-h-full max-w-full object-contain rounded"
                   />
@@ -582,10 +633,18 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                   <button
                     onClick={handleDownloadAllZip}
                     disabled={isZipping}
-                    className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98"
+                    className="relative p-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center group flex-shrink-0"
+                    title={isZipping ? 'Archiving ZIP...' : `Download all (${completedCount}) compressed images as ZIP`}
+                    aria-label={isZipping ? 'Archiving ZIP...' : `Download all (${completedCount}) compressed images as ZIP`}
                   >
-                    <Archive className="w-5 h-5" />
-                    <span>Download All Compressed ({completedCount} Images ZIP)</span>
+                    {isZipping ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Archive className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    )}
+                    <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-slate-900 dark:bg-slate-950 text-emerald-400 border border-emerald-500/60 shadow-xs uppercase tracking-tight">
+                      {isZipping ? '...' : `${completedCount}ZIP`}
+                    </span>
                   </button>
                 </div>
               )}
@@ -609,6 +668,18 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
           onDownload={modalItem.onDownload}
         />
       )}
+
+      {/* Image Editor Modal (Crop, Rotate, Flip) */}
+      <ImageEditorModal
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        imageItem={editingItem}
+        onSave={(updatedItem) => {
+          setImages((prev) =>
+            prev.map((img) => (img.id === updatedItem.id ? updatedItem : img))
+          );
+        }}
+      />
     </div>
   );
 };

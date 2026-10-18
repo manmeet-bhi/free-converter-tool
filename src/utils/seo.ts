@@ -69,7 +69,6 @@ export function generateSchemaForPage(meta: PageMetadata, faqs?: { question: str
     name: SITE_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/favicon.ico`,
-    sameAs: ['https://github.com/manmeet-bhi/free-converter-tool'],
   });
 
   // 2. WebSite Schema (with search capability)

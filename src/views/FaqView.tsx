@@ -35,7 +35,7 @@ const FAQS: FaqItem[] = [
   {
     question: 'Is there a limit on how many images I can process at once?',
     answer:
-      'There is no artificial limit on the number of images. However, because all processing is performed in your browser memory, processing hundreds of 40+ Megapixel images at once may slow down older computers. ImageKit executes batch processing sequentially to prevent browser tab crashes.',
+      'You can add up to 20 images per batch. To process more, add another batch. All processing happens in your browser, so large images may still use significant memory. ImageKit processes images sequentially to help prevent browser tab crashes.',
   },
   {
     question: 'Can I convert images to website Favicons (.ICO)?',

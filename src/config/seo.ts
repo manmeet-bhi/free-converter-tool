@@ -39,7 +39,7 @@ export const SEO_ROUTES: Record<string, PageMetadata> = {
   '/': {
     slug: '/',
     title: 'Free Online Image Converter, Compressor & Resizer | ImageKit',
-    description: 'Convert between JPG, PNG, WebP, BMP, and ICO with 100% in-browser privacy. Fast batch processing, target size compression, and custom resizing with zero server uploads.',
+    description: 'Convert between JPG, PNG, WebP, BMP, and ICO with complete local privacy. Fast batch processing, target size compression, and custom resizing with zero server uploads.',
     keywords: ['image converter', 'image compressor', 'image resizer', 'free online converter', 'png to jpg', 'jpg to webp', 'client-side image processing'],
     h1: 'Fast, Private In-Browser Image Converter & Compressor',
     canonical: `${SITE_URL}/`,
@@ -157,33 +157,11 @@ export const SEO_ROUTES: Record<string, PageMetadata> = {
     priority: 0.85,
     isIndexable: true,
   },
-  '/format': {
-    slug: '/format',
-    title: 'Supported Image Formats & Browser Capabilities | ImageKit',
-    description: 'Explore all supported input and output image formats in ImageKit: WebP, PNG, JPG, SVG, GIF, BMP, and ICO. Transparent client-side capability breakdown.',
-    keywords: ['supported image formats', 'webp support', 'png transparency', 'browser image matrix', 'client side encoders'],
-    h1: 'Supported Image Formats',
-    canonical: `${SITE_URL}/format`,
-    changefreq: 'monthly',
-    priority: 0.7,
-    isIndexable: true,
-  },
-  '/features': {
-    slug: '/features',
-    title: 'Features & Architecture – Pure In-Browser Client Engine | ImageKit',
-    description: 'Learn how ImageKit processes images directly on your device CPU/GPU using HTML5 Canvas, Web Workers, and custom TypeScript binary encoders with zero server uploads.',
-    keywords: ['in-browser image processing', 'client-side converter architecture', 'private image processing', 'html5 canvas encoder'],
-    h1: 'Engine Architecture & Features',
-    canonical: `${SITE_URL}/features`,
-    changefreq: 'monthly',
-    priority: 0.6,
-    isIndexable: true,
-  },
   '/about': {
     slug: '/about',
-    title: 'About Us – Private, Fast & Open-Source Image Utilities | ImageKit',
-    description: 'Discover the mission behind ImageKit: providing free, accessible, and 100% private image manipulation tools that never upload personal photos to cloud servers.',
-    keywords: ['about imagekit', 'open source image converter', 'private photo utility', 'free converter tool'],
+    title: 'About Us – Private, Fast & Secure Image Utilities | ImageKit',
+    description: 'Discover the mission behind ImageKit: providing free, accessible, and completely private image manipulation tools that never upload personal photos to cloud servers.',
+    keywords: ['about imagekit', 'free image converter', 'private photo utility', 'free converter tool'],
     h1: 'About ImageKit',
     canonical: `${SITE_URL}/about`,
     changefreq: 'monthly',
@@ -203,9 +181,9 @@ export const SEO_ROUTES: Record<string, PageMetadata> = {
   },
   '/contact': {
     slug: '/contact',
-    title: 'Contact Us & Community Support | ImageKit',
-    description: 'Have feedback, questions, or feature requests? Contact the ImageKit development team or contribute to our open-source GitHub repository.',
-    keywords: ['contact imagekit', 'customer support', 'open source repository', 'feature request'],
+    title: 'Contact Us & Customer Support | ImageKit',
+    description: 'Have feedback, questions, or feature requests? Contact the ImageKit team directly through our inquiry form.',
+    keywords: ['contact imagekit', 'customer support', 'inquiry form', 'feature request'],
     h1: 'Contact Us & Support',
     canonical: `${SITE_URL}/contact`,
     changefreq: 'monthly',
@@ -219,28 +197,6 @@ export const SEO_ROUTES: Record<string, PageMetadata> = {
     keywords: ['privacy policy', 'zero upload guarantee', 'client side privacy', 'gdpr compliant image converter'],
     h1: 'Privacy Policy',
     canonical: `${SITE_URL}/privacy`,
-    changefreq: 'yearly',
-    priority: 0.3,
-    isIndexable: true,
-  },
-  '/terms': {
-    slug: '/terms',
-    title: 'Terms of Service – User Rights & Fair Use | ImageKit',
-    description: 'Review the terms of service for ImageKit. You retain 100% ownership and copyright of all images processed through our free online web tools.',
-    keywords: ['terms of service', 'user rights', 'image copyright', 'acceptable use policy'],
-    h1: 'Terms of Service',
-    canonical: `${SITE_URL}/terms`,
-    changefreq: 'yearly',
-    priority: 0.3,
-    isIndexable: true,
-  },
-  '/cookie': {
-    slug: '/cookie',
-    title: 'Cookie & Local Storage Policy | ImageKit',
-    description: 'Detailed disclosure of local storage keys and privacy-respecting analytics cookies used by ImageKit to remember theme preferences and optimize site speed.',
-    keywords: ['cookie policy', 'local storage disclosure', 'analytics cookies'],
-    h1: 'Cookie Policy',
-    canonical: `${SITE_URL}/cookie`,
     changefreq: 'yearly',
     priority: 0.3,
     isIndexable: true,
@@ -261,8 +217,6 @@ export function getPageMetadata(path: string): PageMetadata {
   // Aliases
   if (normalized === '/compressor') return SEO_ROUTES['/image-compressor'];
   if (normalized === '/resizer') return SEO_ROUTES['/resize-image'];
-  if (normalized === '/formats') return SEO_ROUTES['/format'];
-  if (normalized === '/cookies') return SEO_ROUTES['/cookie'];
   if (normalized === '/image-converter') return SEO_ROUTES['/converter'];
 
   // Default fallback

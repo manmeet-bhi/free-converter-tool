@@ -104,22 +104,22 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
         {/* Trust & Performance Badges */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-sm">
           <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span className="font-semibold">100% In-Browser Privacy</span>
+            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+            <span className="font-semibold">Local Device Processing</span>
           </div>
           <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <Zap className="w-4 h-4 text-amber-500" />
+            <Zap className="w-5 h-5 text-amber-500" />
             <span className="font-semibold">Instant Local Processing</span>
           </div>
           <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <Lock className="w-4 h-4 text-blue-500" />
+            <Lock className="w-5 h-5 text-blue-500" />
             <span className="font-semibold">Zero Server Uploads</span>
           </div>
         </div>
       </header>
 
       {/* Embedded Active Tool Interface */}
-      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-2 sm:p-6">
+      <section className={images.length > 0 ? "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-2 sm:p-6" : ""}>
         {config.toolType === 'converter' && (
           <ConverterView
             images={images}
@@ -194,7 +194,7 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
               className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2 hover:border-blue-400 dark:hover:border-blue-600 transition-colors"
             >
               <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-bold">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {benefit.title}
                 </h3>

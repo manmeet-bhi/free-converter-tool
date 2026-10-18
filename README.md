@@ -18,9 +18,9 @@ ImageKit is a fast, 100% private, client-side web utility for converting, compre
   - Pixel dimensions, percentage scaling, and aspect ratio locking.
   - Built-in social media and display presets (Instagram, TikTok, Twitter/X, YouTube thumbnails, Facebook, Full HD, 4K, Favicons).
 - **Comprehensive Informational & Legal Pages**:
-  - Dedicated pages for About Us, Contact Us, Privacy Policy, Terms of Service, and Cookie Policy.
+  - Dedicated pages for About Us, Contact Us, and Privacy Policy.
 - **URL Slug Routing**:
-  - Clean client-side routes: `/home`, `/converter`, `/compressor`, `/resizer`, `/format`, `/about`, `/contact`, `/privacy`, `/terms`, `/cookie`.
+  - Clean client-side routes: `/home`, `/converter`, `/compressor`, `/resizer`, `/format`, `/about`, `/contact`, `/privacy`.
 - **Preloader & Lightweight Animations**:
   - Zero-overhead CSS preloader and micro-animations for high performance.
 - **Google Analytics Ready**:

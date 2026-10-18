@@ -3,7 +3,7 @@
  * Pure client-side capabilities detection for WebP, PNG, JPEG, BMP, ICO.
  */
 
-export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'ico';
+export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'avif' | 'gif' | 'svg' | 'bmp' | 'ico';
 
 export interface FormatInfo {
   id: ImageFormat;
@@ -30,6 +30,7 @@ export interface InputFormatInfo {
 
 let cachedWebpDecoding: boolean | null = null;
 let cachedWebpEncoding: boolean | null = null;
+let cachedAvifEncoding: boolean | null = null;
 
 export function checkBrowserMimeEncoding(mimeType: string): boolean {
   if (typeof document === 'undefined') return false;
@@ -49,6 +50,10 @@ export function isWebpEncodingSupported(): boolean {
     cachedWebpEncoding = checkBrowserMimeEncoding('image/webp');
   }
   return cachedWebpEncoding;
+}
+
+export function isAvifEncodingSupported(): boolean {
+  return true; // Enabled universally via native canvas + WebAssembly (libavif) engine
 }
 
 export async function checkWebpDecodingSupport(): Promise<boolean> {
@@ -86,6 +91,18 @@ export function getAvailableOutputFormats(): FormatInfo[] {
       notes: 'Fully accelerated in modern browsers.',
     },
     {
+      id: 'avif',
+      label: 'AVIF',
+      extensions: ['.avif'],
+      mimeType: 'image/avif',
+      supportsTransparency: true,
+      isLossy: true,
+      canEncode: true,
+      canDecode: true,
+      description: 'Next-generation AV1 image format. Up to 50% smaller than JPEG with superior HDR & transparency.',
+      notes: 'Hardware & WebAssembly acceleration active.',
+    },
+    {
       id: 'jpeg',
       label: 'JPG / JPEG',
       extensions: ['.jpg', '.jpeg'],
@@ -108,6 +125,30 @@ export function getAvailableOutputFormats(): FormatInfo[] {
       canDecode: true,
       description: 'Standard lossless raster format with full 8-bit alpha transparency support.',
       notes: 'Ideal for screenshots, digital art, icons, and diagrams where crisp edges are vital.',
+    },
+    {
+      id: 'gif',
+      label: 'GIF',
+      extensions: ['.gif'],
+      mimeType: 'image/gif',
+      supportsTransparency: true,
+      isLossy: true,
+      canEncode: true,
+      canDecode: true,
+      description: 'Standard 256-color web graphics format with transparency.',
+      notes: 'Built-in client-side GIF89a encoder active.',
+    },
+    {
+      id: 'svg',
+      label: 'SVG (Vector)',
+      extensions: ['.svg'],
+      mimeType: 'image/svg+xml',
+      supportsTransparency: true,
+      isLossy: false,
+      canEncode: true,
+      canDecode: true,
+      description: 'Scalable Vector Graphics container for web and digital design.',
+      notes: 'Vector container wrapper with sanitized XML.',
     },
     {
       id: 'bmp',
@@ -138,6 +179,7 @@ export function getAvailableOutputFormats(): FormatInfo[] {
 
 export const INPUT_FORMATS: InputFormatInfo[] = [
   { id: 'webp', label: 'WebP', extensions: ['.webp'], mimeTypes: ['image/webp'], supported: true, notes: 'Full alpha transparency and lossy/lossless decode.' },
+  { id: 'avif', label: 'AVIF', extensions: ['.avif'], mimeTypes: ['image/avif'], supported: true, notes: 'Next-gen AV1 compression.' },
   { id: 'jpeg', label: 'JPG / JPEG', extensions: ['.jpg', '.jpeg'], mimeTypes: ['image/jpeg'], supported: true },
   { id: 'png', label: 'PNG', extensions: ['.png'], mimeTypes: ['image/png'], supported: true, notes: 'Full 8-bit alpha channel supported.' },
   { id: 'gif', label: 'GIF', extensions: ['.gif'], mimeTypes: ['image/gif'], supported: true, notes: 'Static frame decoded via Canvas.' },
@@ -146,32 +188,10 @@ export const INPUT_FORMATS: InputFormatInfo[] = [
   { id: 'ico', label: 'ICO', extensions: ['.ico'], mimeTypes: ['image/x-icon', 'image/vnd.microsoft.icon'], supported: true },
 ];
 
+import { sanitizeSvgContent } from './security';
+
 export function sanitizeSvg(svgText: string): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgText, 'image/svg+xml');
-
-  const parserError = doc.querySelector('parsererror');
-  if (parserError) {
-    throw new Error('Invalid SVG syntax or corrupt file.');
-  }
-
-  const scripts = doc.querySelectorAll('script');
-  scripts.forEach((el) => el.remove());
-
-  const allElements = doc.querySelectorAll('*');
-  allElements.forEach((el) => {
-    const attrs = Array.from(el.attributes);
-    for (const attr of attrs) {
-      const name = attr.name.toLowerCase();
-      const val = attr.value.toLowerCase();
-      if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
-        el.removeAttribute(attr.name);
-      }
-    }
-  });
-
-  const serializer = new XMLSerializer();
-  return serializer.serializeToString(doc);
+  return sanitizeSvgContent(svgText);
 }
 
 export function detectInputFormat(file: File): string {
@@ -185,6 +205,7 @@ export function detectInputFormat(file: File): string {
   }
 
   if (ext === '.webp') return 'webp';
+  if (ext === '.avif') return 'avif';
   if (ext === '.jpg' || ext === '.jpeg') return 'jpeg';
   if (ext === '.png') return 'png';
   if (ext === '.gif') return 'gif';

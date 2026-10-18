@@ -55,10 +55,11 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             {onDownload && (
               <button
                 onClick={onDownload}
-                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-95"
+                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                title="Download image"
+                aria-label="Download image"
               >
-                <Download className="w-4 h-4" />
-                <span>Download</span>
+                <Download className="w-5 h-5" />
               </button>
             )}
             <button

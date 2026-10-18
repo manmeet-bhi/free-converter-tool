@@ -1,21 +1,25 @@
 import React from 'react';
 import { ActiveTab } from '../types';
 import { DropZone } from '../components/DropZone';
-import { 
-  FileImage, 
-  Minimize2, 
-  Scaling, 
-  ShieldCheck, 
-  Zap, 
-  Lock, 
-  Layers, 
-  CheckCircle2, 
-  ArrowRight,
-  Sparkles,
-  HelpCircle,
-  Cpu
+import {
+  ShieldCheck,
+  Zap,
+  Lightbulb,
+  Heart,
+  Maximize2,
+  Wand2,
+  Code,
+  ShoppingBag,
+  Camera,
+  Share2,
+  Mail,
+  PenTool,
+  Briefcase,
+  GraduationCap,
+  CloudOff,
+  Trash2
 } from 'lucide-react';
-import { isWebpEncodingSupported } from '../utils/formatSupport';
+import { isWebpEncodingSupported, isAvifEncodingSupported } from '../utils/formatSupport';
 
 interface HomeViewProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -29,267 +33,405 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
     <div className="space-y-16 py-6 sm:py-10">
       {/* Hero Section */}
       <div className="text-center max-w-4xl mx-auto space-y-4 px-4">
-        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 shadow-xs">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <span>Zero Server Uploads • 100% In-Browser Engine</span>
-        </div>
-
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-          Convert, Compress & Optimize Images
+          Convert &amp; Compress
         </h1>
-
-        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          The all-in-one private image workstation. Convert formats, compress file sizes, and resize dimensions instantly with zero data leaving your computer.
-        </p>
-
         {/* Hero DropZone */}
         <div className="pt-4 max-w-2xl mx-auto">
           <DropZone
             onFilesSelected={(files) => onFilesSelected(files, 'converter')}
-            title="Drop images here to start optimizing"
-            subtitle="JPG, PNG, WebP, SVG, GIF, BMP, ICO • Unlimited & Free"
+            title="Drop images here to start"
+            subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
           />
         </div>
       </div>
 
-      {/* Quick Action Cards */}
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Choose Your Image Tool</h2>
-          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">All tools run natively inside your browser with maximum privacy</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Converter Card */}
-          <div
-            onClick={() => setActiveTab('converter')}
-            className="group relative bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-200 cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <FileImage className="w-6 h-6" />
+      {/* Feature Highlights Section */}
+      <section className="max-w-2xl mx-auto px-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-8 sm:gap-y-10 gap-x-6">
+            {/* 1. Perfect Quality */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <Maximize2 className="w-7 h-7 stroke-[1.8]" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                Image Converter
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Perfect Quality
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                Convert between JPG, PNG, WebP, BMP, and ICO. Batch convert multiple images simultaneously, rename outputs, and bundle into a ZIP.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Advanced encoding algorithms preserve crisp details and color accuracy without degradation.
               </p>
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">JPG &rarr; WebP</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">PNG &rarr; ICO</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">SVG &rarr; PNG</span>
-              </div>
             </div>
-            <div className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xs">
-              <span>Open Converter</span>
-              <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
 
-          {/* Compressor Card */}
-          <div
-            onClick={() => setActiveTab('compressor')}
-            className="group relative bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Minimize2 className="w-6 h-6" />
+            {/* 2. Lightning Fast */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <Zap className="w-7 h-7 stroke-[1.8]" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                Image Compressor
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Lightning Fast
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                Compress JPG, PNG, and WebP files up to 90% without visible loss. Target specific file sizes (e.g. 200 KB) using our binary search optimizer.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Instant client-side processing leverages local hardware acceleration for real-time speed.
               </p>
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Target KB/MB</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Quality Presets</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Before/After Slider</span>
-              </div>
             </div>
-            <div className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xs">
-              <span>Open Compressor</span>
-              <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
 
-          {/* Resizer Card */}
-          <div
-            onClick={() => setActiveTab('resizer')}
-            className="group relative bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-cyan-500 dark:hover:border-cyan-500 transition-all duration-200 cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 dark:bg-cyan-950/80 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Scaling className="w-6 h-6" />
+            {/* 3. Easy To Use */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <Wand2 className="w-7 h-7 stroke-[1.8]" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                Image Resizer
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Easy To Use
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                Scale pixel dimensions, maintain aspect ratios, or choose one-click presets for Instagram, Twitter/X, YouTube, and website favicons.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Just drop your files and let our tools do the rest in one simple, intuitive click.
               </p>
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Social Presets</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Aspect Lock</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Percentage Scale</span>
+            </div>
+
+            {/* 4. Works Anywhere */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <Lightbulb className="w-7 h-7 stroke-[1.8]" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Works Anywhere
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                100% browser-based with zero install. Seamless on Windows, macOS, Linux, iOS & Android.
+              </p>
+            </div>
+
+            {/* 5. Privacy Guaranteed */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <ShieldCheck className="w-7 h-7 stroke-[1.8]" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Privacy Guaranteed
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Your photos never leave your device. All conversions run locally inside your browser.
+              </p>
+            </div>
+
+            {/* 6. Free to use */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110 transition-all duration-200 mb-2.5">
+                <Heart className="w-7 h-7 stroke-[1.8]" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Free to Use
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                No subscriptions, no hidden watermarks, and no limits. Completely free forever.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How To Resize & Compress Guides */}
+      <section className="max-w-2xl mx-auto px-4 space-y-6">
+        {/* 1. How to Resize an Image */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+            {/* Visual Illustration matching reference */}
+            <div className="bg-slate-100 dark:bg-[#1f242d] rounded-2xl p-6 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80 min-h-[160px] sm:min-h-[190px]">
+              <svg viewBox="0 0 250 120" fill="none" stroke="currentColor" className="w-full max-w-[210px] h-auto text-slate-800 dark:text-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Left: Original Image */}
+                <g transform="translate(10, 15)">
+                  <rect x="0" y="0" width="76" height="76" rx="14" strokeWidth="2.5" />
+                  <circle cx="38" cy="28" r="7" strokeWidth="2.5" />
+                  <path d="M4 64 L26 42 L42 56 L54 44 L72 62" strokeWidth="2.5" />
+                </g>
+
+                {/* Arrow */}
+                <g transform="translate(104, 46)">
+                  <line x1="0" y1="8" x2="22" y2="8" strokeWidth="2.5" />
+                  <polyline points="15,1 22,8 15,15" strokeWidth="2.5" />
+                </g>
+
+                {/* Right: Resized Image with dashed handles */}
+                <g transform="translate(145, 10)">
+                  {/* Dashed outer bounding box */}
+                  <rect x="6" y="6" width="80" height="80" strokeDasharray="4 4" strokeWidth="2" className="text-slate-400 dark:text-slate-400" />
+                  {/* Corner handles */}
+                  <rect x="3" y="3" width="6" height="6" fill="currentColor" />
+                  <rect x="83" y="3" width="6" height="6" fill="currentColor" />
+                  <rect x="3" y="83" width="6" height="6" fill="currentColor" />
+                  <rect x="83" y="83" width="6" height="6" fill="currentColor" />
+                  {/* Diagonal resize cursor arrow */}
+                  <g transform="translate(68, 14)">
+                    <path d="M0 10 L8 2 M2 2 L8 2 L8 8" strokeWidth="2.5" />
+                  </g>
+                  {/* Scaled inner image */}
+                  <g transform="translate(8, 26)">
+                    <rect x="0" y="0" width="52" height="52" rx="10" strokeWidth="2.2" />
+                    <circle cx="26" cy="18" r="5" strokeWidth="2.2" />
+                    <path d="M3 44 L18 28 L30 38 L38 30 L49 41" strokeWidth="2.2" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+
+            {/* Step-by-step instructions */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                How to Resize an Image?
+              </h3>
+              <ol className="space-y-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                <li>
+                  1. Click on the <strong className="text-slate-900 dark:text-white font-semibold">"Select Image"</strong> button to select an image.
+                </li>
+                <li>
+                  2. Enter a new <strong className="text-slate-900 dark:text-white font-semibold">target size</strong> for your image.
+                </li>
+                <li>
+                  3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Resize Image"</strong> button to resize the image.
+                </li>
+              </ol>
+              <div className="pt-1">
+                <button
+                  onClick={() => setActiveTab('resizer')}
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                >
+                  Go to Image Resizer &rarr;
+                </button>
               </div>
             </div>
-            <div className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-xs">
-              <span>Open Resizer</span>
-              <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Browser Encoding Capabilities Status */}
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-slate-100/80 dark:bg-slate-900/80 rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-            <div className="flex items-center space-x-2">
-              <Cpu className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Your Browser Engine Capabilities
+        {/* 2. How to Compress an Image */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+            {/* Visual Illustration for Compress */}
+            <div className="bg-slate-100 dark:bg-[#1f242d] rounded-2xl p-6 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80 min-h-[160px] sm:min-h-[190px]">
+              <svg viewBox="0 0 250 120" fill="none" stroke="currentColor" className="w-full max-w-[210px] h-auto text-slate-800 dark:text-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Left: Original Large Image */}
+                <g transform="translate(10, 10)">
+                  <rect x="0" y="0" width="76" height="76" rx="14" strokeWidth="2.5" />
+                  <circle cx="38" cy="28" r="7" strokeWidth="2.5" />
+                  <path d="M4 64 L26 42 L42 56 L54 44 L72 62" strokeWidth="2.5" />
+                  <rect x="14" y="82" width="48" height="18" rx="9" fill="currentColor" className="text-slate-200 dark:text-slate-800" stroke="none" />
+                  <text x="38" y="95" textAnchor="middle" fill="currentColor" fontSize="11" fontWeight="bold" stroke="none" className="text-slate-700 dark:text-slate-300">
+                    5.2 MB
+                  </text>
+                </g>
+
+                {/* Arrow */}
+                <g transform="translate(104, 46)">
+                  <line x1="0" y1="8" x2="22" y2="8" strokeWidth="2.5" />
+                  <polyline points="15,1 22,8 15,15" strokeWidth="2.5" />
+                </g>
+
+                {/* Right: Compressed Image with Reduction */}
+                <g transform="translate(150, 10)">
+                  <rect x="4" y="4" width="72" height="72" rx="12" strokeWidth="2.5" />
+                  <circle cx="40" cy="28" r="6" strokeWidth="2.2" />
+                  <path d="M8 62 L26 42 L38 52 L48 42 L68 58" strokeWidth="2.2" />
+                  {/* Compression Inward Corner Marks */}
+                  <path d="M-1 4 L4 4 L4 -1" strokeWidth="2" />
+                  <path d="M81 4 L76 4 L76 -1" strokeWidth="2" />
+                  <path d="M-1 76 L4 76 L4 81" strokeWidth="2" />
+                  <path d="M81 76 L76 76 L76 81" strokeWidth="2" />
+                  <rect x="8" y="82" width="64" height="18" rx="9" fill="currentColor" className="text-emerald-100 dark:text-emerald-950" stroke="none" />
+                  <text x="40" y="95" textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-emerald-700 dark:text-emerald-400">
+                    -85% (350 KB)
+                  </text>
+                </g>
+              </svg>
+            </div>
+
+            {/* Step-by-step instructions */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                How to Compress an Image?
               </h3>
-            </div>
-            <button
-              onClick={() => setActiveTab('formats')}
-              className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              View detailed format matrix &rarr;
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">JPG / PNG</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Native</span>
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">WebP</span>
-              <span className={`text-xs font-bold flex items-center space-x-1 ${supportsWebp ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`}>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>{supportsWebp ? 'Accelerated' : 'Unavailable'}</span>
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">PNG</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Lossless</span>
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">BMP & ICO</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Engine</span>
-              </span>
+              <ol className="space-y-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                <li>
+                  1. Click on the <strong className="text-slate-900 dark:text-white font-semibold">"Select Image"</strong> button to upload your picture.
+                </li>
+                <li>
+                  2. Choose your preferred <strong className="text-slate-900 dark:text-white font-semibold">compression quality</strong> or target file size.
+                </li>
+                <li>
+                  3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Download"</strong> button to save the optimized file.
+                </li>
+              </ol>
+              <div className="pt-1">
+                <button
+                  onClick={() => setActiveTab('compressor')}
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                >
+                  Go to Image Compressor &rarr;
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Key Benefits Grid */}
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            Why Professionals Choose ImageKit
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-            Traditional online image tools upload your personal images to cloud servers. ImageKit is engineered completely differently.
-          </p>
-        </div>
+      {/* Who Uses This Tool Section */}
+      <section className="max-w-2xl mx-auto px-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="text-center mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+              Who Uses This Tool?
+            </h2>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-              <Lock className="w-5 h-5" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Code className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Web Developers</span>
             </div>
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">100% Private</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Images never leave your browser. Zero cloud uploads, zero data leaks, and zero tracking cookies.
-            </p>
-          </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
-              <Zap className="w-5 h-5" />
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <ShoppingBag className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">E-Commerce Sellers</span>
             </div>
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">Lightning Fast</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              No uploading or downloading wait times. Images process at the full speed of your local CPU and GPU.
-            </p>
-          </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
-              <Layers className="w-5 h-5" />
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Camera className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Photographers</span>
             </div>
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">Batch Processing</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Queue dozens of images at once, apply uniform compression, and download everything as a clean ZIP archive.
-            </p>
-          </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-pink-50 dark:bg-pink-950/70 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0">
+                <Share2 className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Social Media Managers</span>
             </div>
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">Safe & Sanitized</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              SVGs are thoroughly sanitized to strip potential script execution or remote tracking beacons.
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Frequently Asked Questions Preview */}
-      <div className="max-w-3xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
-            <HelpCircle className="w-4 h-4" />
-            <span>Common Questions</span>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Quick Answers</h2>
-        </div>
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Mail className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Email Marketers</span>
+            </div>
 
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">
-              Do my images get uploaded to any server?
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              No. ImageKit operates exclusively within your client web browser using the HTML5 Canvas API, standard Web Workers, and JSZip. Your images are never transmitted over the internet.
-            </p>
-          </div>
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <PenTool className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Bloggers and Content Creators</span>
+            </div>
 
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-1.5">
-              What is the best format for modern web images?
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              WebP offers the best combination of wide browser compatibility, high compression (25-35% smaller than JPEG), and full transparency support across all modern devices.
-            </p>
-          </div>
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-cyan-50 dark:bg-cyan-950/70 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                <Briefcase className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Office &amp; Business Teams</span>
+            </div>
 
-          <div className="text-center pt-2">
-            <button
-              onClick={() => setActiveTab('faq')}
-              className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Read all frequently asked questions &rarr;
-            </button>
+            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+              <div className="w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-950/70 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-6 h-6 stroke-[2]" />
+              </div>
+              <span className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">Student &amp; Educators</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Privacy-First Image Compression Section */}
+      <section className="max-w-2xl mx-auto px-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Left Side: Big Icons Arranged in a Straight Vertical Line */}
+            <div className="relative flex flex-col justify-between space-y-6 sm:space-y-7">
+              {/* Vertical connector line */}
+              <div className="absolute left-7 sm:left-8 top-8 bottom-8 w-0.5 bg-slate-200 dark:bg-slate-800" />
+
+              {/* Icon 1: Zero Server Uploads */}
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 border-2 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+                  <CloudOff className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                    Zero Server Uploads
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    100% in-browser processing
+                  </p>
+                </div>
+              </div>
+
+              {/* Icon 2: No Retention, No Storage */}
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/80 border-2 border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
+                  <Trash2 className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                    No Retention, No Storage
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Zero logs or saved data
+                  </p>
+                </div>
+              </div>
+
+              {/* Icon 3: GDPR & CCPA Compliant */}
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-50 dark:bg-purple-950/80 border-2 border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
+                  <ShieldCheck className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                    GDPR &amp; CCPA Compliant
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Strict privacy standards
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side: Detailed Explanations */}
+            <div className="flex flex-col justify-between space-y-6 sm:space-y-7 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 pt-6 md:pt-0 md:pl-8">
+              <div className="space-y-1.5">
+                <h5 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                  100% Local
+                </h5>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pl-4.5">
+                  All the compression happens directly on your machine. Zero server connections, zero data sent.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <h5 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                  No Sign-Ups
+                </h5>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pl-4.5">
+                  Just jump in and use it. We don't want your email, there are no accounts, and we don't track you.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <h5 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />
+                  Poof, It's Gone
+                </h5>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pl-4.5">
+                  The second you close your browser tab, all temporary memory used for your images is completely wiped clean.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

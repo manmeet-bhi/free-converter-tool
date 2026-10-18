@@ -11,15 +11,12 @@ import { HomeView } from './views/HomeView';
 import { ConverterView } from './views/ConverterView';
 import { CompressorView } from './views/CompressorView';
 import { ResizerView } from './views/ResizerView';
-import { FormatsView } from './views/FormatsView';
 import { PrivacyView } from './views/PrivacyView';
 import { FaqView } from './views/FaqView';
-import { FeaturesView } from './views/FeaturesView';
 import { AboutView } from './views/AboutView';
 import { ContactView } from './views/ContactView';
-import { TermsView } from './views/TermsView';
-import { CookiePolicyView } from './views/CookiePolicyView';
 import { ToolLandingView } from './views/ToolLandingView';
+import { ExifRemoverView } from './views/ExifRemoverView';
 import { TOOL_LANDING_CONFIGS } from './config/landingPages';
 import { getPageMetadata } from './config/seo';
 import { updatePageSEO } from './utils/seo';
@@ -35,16 +32,12 @@ const SLUG_TO_TAB: Record<string, ActiveTab> = {
   '/image-compressor': 'compressor',
   '/resizer': 'resizer',
   '/resize-image': 'resizer',
-  '/format': 'formats',
-  '/formats': 'formats',
-  '/features': 'features',
+  '/exif-remover': 'exif-remover',
+  '/remove-exif': 'exif-remover',
   '/faq': 'faq',
   '/about': 'about',
   '/contact': 'contact',
   '/privacy': 'privacy',
-  '/terms': 'terms',
-  '/cookie': 'cookies',
-  '/cookies': 'cookies',
   // Specific SEO conversion landing pages
   '/png-to-jpg': 'png-to-jpg',
   '/jpg-to-png': 'jpg-to-png',
@@ -60,14 +53,11 @@ const TAB_TO_SLUG: Record<ActiveTab, string> = {
   converter: '/converter',
   compressor: '/compressor',
   resizer: '/resizer',
-  formats: '/format',
-  features: '/features',
+  'exif-remover': '/exif-remover',
   faq: '/faq',
   about: '/about',
   contact: '/contact',
   privacy: '/privacy',
-  terms: '/terms',
-  cookies: '/cookie',
   'png-to-jpg': '/png-to-jpg',
   'jpg-to-png': '/jpg-to-png',
   'png-to-webp': '/png-to-webp',
@@ -77,15 +67,28 @@ const TAB_TO_SLUG: Record<ActiveTab, string> = {
   'png-to-ico': '/png-to-ico',
 };
 
+const MAX_FILES_PER_BATCH = 20;
+
 function getTabFromPath(): ActiveTab {
   if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
   return SLUG_TO_TAB[path] || 'home';
 }
 
+import { UploadProgressBar, UploadStatus } from './components/UploadProgressBar';
+
 export default function App() {
   const [activeTab, setActiveTabState] = useState<ActiveTab>(getTabFromPath);
   const [images, setImages] = useState<ImageItem[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
+    isUploading: false,
+    totalFiles: 0,
+    completedFiles: 0,
+    currentFileName: '',
+    progressPercent: 0,
+    phase: 'idle',
+    errorMessages: [],
+  });
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('imagekit_theme');
@@ -94,6 +97,19 @@ export default function App() {
     }
     return false;
   });
+
+  // Prevent accidental drop outside dropzone from navigating browser away
+  useEffect(() => {
+    const preventWindowDrop = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('dragover', preventWindowDrop);
+    window.addEventListener('drop', preventWindowDrop);
+    return () => {
+      window.removeEventListener('dragover', preventWindowDrop);
+      window.removeEventListener('drop', preventWindowDrop);
+    };
+  }, []);
 
   // Navigate to tab and update URL slug via HTML5 History API
   const setActiveTab = useCallback((tab: ActiveTab) => {
@@ -144,7 +160,10 @@ export default function App() {
     return () => {
       images.forEach((item) => {
         if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
-        if (item.originalInfo.cleanedSvgUrl) revokeUrl(item.originalInfo.cleanedSvgUrl);
+        if (item.originalInfo.previewUrl) revokeUrl(item.originalInfo.previewUrl);
+        if (item.originalInfo.cleanedSvgUrl && item.originalInfo.cleanedSvgUrl !== item.originalInfo.previewUrl) {
+          revokeUrl(item.originalInfo.cleanedSvgUrl);
+        }
       });
     };
   }, []);
@@ -152,13 +171,68 @@ export default function App() {
   // Handle incoming files from Dropzone, clipboard paste, or file pickers
   const handleFilesSelected = useCallback(
     async (files: File[], defaultTool?: ActiveTab) => {
+      if (!files || files.length === 0) return;
+
+      const currentCount = images.length;
+      if (currentCount >= MAX_FILES_PER_BATCH) {
+        setUploadStatus({
+          isUploading: false,
+          totalFiles: 0,
+          completedFiles: 0,
+          currentFileName: '',
+          progressPercent: 0,
+          phase: 'idle',
+          errorMessages: [`Maximum limit of ${MAX_FILES_PER_BATCH} files reached. Please clear or convert current queue before adding more files.`],
+        });
+        return;
+      }
+
+      const availableSlots = Math.max(0, MAX_FILES_PER_BATCH - currentCount);
+      const filesToProcess = files.slice(0, availableSlots);
       const newItems: ImageItem[] = [];
+      const errors: string[] =
+        files.length > availableSlots
+          ? [`Only up to ${MAX_FILES_PER_BATCH} files can be in the queue at once. ${files.length - availableSlots} additional file(s) were skipped.`]
+          : [];
+      const total = filesToProcess.length;
 
-      for (const file of files) {
+      // Initialize upload progress bar
+      setUploadStatus({
+        isUploading: true,
+        totalFiles: total,
+        completedFiles: 0,
+        currentFileName: filesToProcess[0]?.name || '',
+        currentFileSize: filesToProcess[0]?.size,
+        progressPercent: 5,
+        phase: 'verifying',
+        errorMessages: [...errors],
+      });
+
+      for (let i = 0; i < total; i++) {
+        const file = filesToProcess[i];
+        const stepProgress = Math.round((i / total) * 90) + 5;
+
+        setUploadStatus((prev) => ({
+          ...prev,
+          currentFileName: file.name,
+          currentFileSize: file.size,
+          progressPercent: stepProgress,
+          completedFiles: i,
+          phase: 'verifying',
+        }));
+
         try {
-          const originalInfo = await loadImageFromFile(file);
-          const inputFormat = detectInputFormat(file);
+          // Small yield to allow UI to render progress bar smoothly
+          await new Promise((resolve) => setTimeout(resolve, 30));
 
+          const originalInfo = await loadImageFromFile(file);
+
+          setUploadStatus((prev) => ({
+            ...prev,
+            phase: 'decoding',
+          }));
+
+          const inputFormat = detectInputFormat(file);
           const targetFormat = inputFormat === 'webp' ? 'jpeg' : 'webp';
           const lastDot = file.name.lastIndexOf('.');
           const baseName = lastDot !== -1 ? file.name.slice(0, lastDot) : file.name;
@@ -185,9 +259,28 @@ export default function App() {
 
           newItems.push(item);
         } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : `Failed to load ${file.name}`;
           console.error(`Failed to load file ${file.name}:`, err);
+          errors.push(message);
         }
       }
+
+      // Finalize upload progress
+      setUploadStatus((prev) => ({
+        ...prev,
+        completedFiles: total,
+        progressPercent: 100,
+        phase: 'complete',
+        errorMessages: errors,
+      }));
+
+      // Short delay before closing the upload progress bar
+      setTimeout(() => {
+        setUploadStatus((prev) => ({
+          ...prev,
+          isUploading: false,
+        }));
+      }, 450);
 
       if (newItems.length > 0) {
         setImages((prev) => [...prev, ...newItems]);
@@ -196,7 +289,7 @@ export default function App() {
         }
       }
     },
-    [activeTab, setActiveTab]
+    [images, activeTab, setActiveTab]
   );
 
   return (
@@ -240,9 +333,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'formats' && <FormatsView setActiveTab={setActiveTab} />}
-
-        {activeTab === 'features' && <FeaturesView setActiveTab={setActiveTab} />}
+        {activeTab === 'exif-remover' && <ExifRemoverView />}
 
         {activeTab === 'faq' && <FaqView />}
 
@@ -252,9 +343,6 @@ export default function App() {
 
         {activeTab === 'privacy' && <PrivacyView />}
 
-        {activeTab === 'terms' && <TermsView />}
-
-        {activeTab === 'cookies' && <CookiePolicyView />}
 
         {/* Dedicated SEO Landing Pages for Conversion Pairs */}
         {TOOL_LANDING_CONFIGS[activeTab] && (
@@ -268,6 +356,14 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Real-Time Upload & Security Scanning Progress Bar */}
+      <UploadProgressBar 
+        status={{
+          ...uploadStatus,
+          onDismissErrors: () => setUploadStatus((prev) => ({ ...prev, errorMessages: [] })),
+        }} 
+      />
 
       <Footer setActiveTab={setActiveTab} />
     </div>

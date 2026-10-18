@@ -31,7 +31,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
         desc: 'PNG files are lossless and often large. Converting to JPG dramatically cuts file size, making them faster to email and load.',
       },
       {
-        title: '100% In-Browser Privacy',
+        title: 'Local Client-Side Privacy',
         desc: 'Your photos and sensitive graphics never leave your computer. Processing executes on your local hardware.',
       },
       {
@@ -603,7 +603,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
         desc: 'Smooth bilinear interpolation ensures crisp details and minimal aliasing during scaling.',
       },
       {
-        title: '100% In-Browser Privacy',
+        title: 'Local Client-Side Privacy',
         desc: 'Your photos never leave your device. All resizing executes on your local browser engine.',
       },
       {

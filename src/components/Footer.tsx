@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveTab } from '../types';
-import { ShieldCheck, Sparkles, Cpu, Lock, CheckCircle2, Github, Mail, ExternalLink } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface FooterProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -15,37 +15,20 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
   return (
     <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
-          <div className="sm:col-span-2 md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <Sparkles className="w-4 h-4" />
+          <div className="md:col-span-2 lg:col-span-2 space-y-3">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
+              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-200 dark:to-indigo-300 bg-clip-text text-transparent">
                 ImageKit
               </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
-              Free, private in-browser image converter, compressor, and resizer. Fast processing with zero server uploads and zero data collection.
+              Free, private in-browser image converter, compressor, resizer, and EXIF cleaner. High-speed client-side WebAssembly processing with zero server uploads and 100% privacy.
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <div className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
-                <ShieldCheck className="w-4 h-4" />
-                <span>100% In-Browser Privacy</span>
-              </div>
-
-              <a
-                href="https://github.com/manmeet-bhi/free-converter-tool"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <Github className="w-4 h-4" />
-                <span>GitHub Repository</span>
-                <ExternalLink className="w-3 h-3 ml-0.5 opacity-60" />
-              </a>
-            </div>
           </div>
 
           {/* Tools */}
@@ -57,7 +40,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('converter')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   Image Converter
                 </button>
@@ -65,7 +48,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('compressor')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   Image Compressor
                 </button>
@@ -73,17 +56,17 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('resizer')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   Image Resizer
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('formats')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => handleNav('exif-remover')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
-                  Supported Formats
+                  EXIF Remover
                 </button>
               </li>
             </ul>
@@ -92,13 +75,13 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
           {/* Popular Converters */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
-              Converters
+              Popular Converters
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <button
                   onClick={() => handleNav('png-to-jpg')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   PNG to JPG
                 </button>
@@ -106,7 +89,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('jpg-to-png')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   JPG to PNG
                 </button>
@@ -114,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('png-to-webp')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   PNG to WebP
                 </button>
@@ -122,7 +105,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('webp-to-png')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   WebP to PNG
                 </button>
@@ -130,124 +113,58 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li>
                 <button
                   onClick={() => handleNav('jpg-to-webp')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   JPG to WebP
                 </button>
               </li>
               <li>
                 <button
+                  onClick={() => handleNav('webp-to-jpg')}
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
+                >
+                  WebP to JPG
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => handleNav('png-to-ico')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
                   PNG to ICO Favicon
                 </button>
               </li>
             </ul>
           </div>
-
-          {/* Company & Support */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
-              About & Support
-            </h4>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <button
-                  onClick={() => handleNav('about')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  About Us
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('features')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  Features & Engine
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('faq')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  FAQ Knowledge Base
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('contact')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold"
-                >
-                  Contact Us
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal & Privacy */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
-              Legal & Privacy
-            </h4>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <button
-                  onClick={() => handleNav('privacy')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('terms')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  Terms of Service
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('cookies')}
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  Cookie Policy
-                </button>
-              </li>
-              <li>
-                <a
-                  href="https://github.com/manmeet-bhi/free-converter-tool"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors inline-flex items-center space-x-1"
-                >
-                  <span>Open Source Repo</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 gap-3">
-          <p>© {new Date().getFullYear()} ImageKit (Free Converter Tool). 100% In-Browser & Open Source.</p>
-          <div className="flex flex-wrap items-center gap-4">
-            <button onClick={() => handleNav('about')} className="hover:text-slate-900 dark:hover:text-white">About</button>
-            <button onClick={() => handleNav('contact')} className="hover:text-slate-900 dark:hover:text-white">Contact</button>
-            <button onClick={() => handleNav('privacy')} className="hover:text-slate-900 dark:hover:text-white">Privacy</button>
-            <button onClick={() => handleNav('terms')} className="hover:text-slate-900 dark:hover:text-white">Terms</button>
-            <button onClick={() => handleNav('cookies')} className="hover:text-slate-900 dark:hover:text-white">Cookies</button>
-            <a 
-              href="https://github.com/manmeet-bhi/free-converter-tool"
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center space-x-1"
+          <p>© {new Date().getFullYear()} ImageKit.com</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-medium text-slate-500 dark:text-slate-400">
+            <button
+              onClick={() => handleNav('about')}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <Github className="w-3.5 h-3.5" />
-            </a>
+              About
+            </button>
+            <button
+              onClick={() => handleNav('contact')}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              Contact
+            </button>
+            <button
+              onClick={() => handleNav('faq')}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              FAQ
+            </button>
+            <button
+              onClick={() => handleNav('privacy')}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              Privacy Policy
+            </button>
           </div>
         </div>
       </div>

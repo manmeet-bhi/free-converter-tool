@@ -9,10 +9,9 @@ import {
   Moon, 
   Menu, 
   X,
-  Sparkles,
-  Grid,
-  Github
+  Sparkles
 } from 'lucide-react';
+import { ExifIcon } from './icons/ExifIcon';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -30,11 +29,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Layers className="w-4 h-4" /> },
-    { id: 'converter', label: 'Converter', icon: <FileImage className="w-4 h-4" /> },
-    { id: 'compressor', label: 'Compressor', icon: <Minimize2 className="w-4 h-4" /> },
-    { id: 'resizer', label: 'Resizer', icon: <Scaling className="w-4 h-4" /> },
-    { id: 'formats', label: 'Formats', icon: <Grid className="w-4 h-4" /> },
+    { id: 'home', label: 'Home', icon: <Layers className="w-5 h-5" /> },
+    { id: 'converter', label: 'Converter', icon: <FileImage className="w-5 h-5" /> },
+    { id: 'compressor', label: 'Compressor', icon: <Minimize2 className="w-5 h-5" /> },
+    { id: 'resizer', label: 'Resizer', icon: <Scaling className="w-5 h-5" /> },
+    { id: 'exif-remover', label: 'EXIF Remover', icon: <ExifIcon className="w-5 h-5" /> },
   ];
 
   const handleNavClick = (tab: ActiveTab) => {
@@ -86,24 +85,14 @@ export const Header: React.FC<HeaderProps> = ({
             })}
           </nav>
 
-          {/* Right Action: GitHub & Theme Toggle */}
+          {/* Right Action: Theme Toggle */}
           <div className="flex items-center space-x-2">
-            <a
-              href="https://github.com/manmeet-bhi/free-converter-tool"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="View on GitHub"
-              className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
-              <Github className="w-4.5 h-4.5" />
-            </a>
-
             <button
               onClick={toggleTheme}
               aria-label="Toggle dark mode"
               className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
-              {isDark ? <Sun className="w-4.5 h-4.5 text-amber-400" /> : <Moon className="w-4.5 h-4.5" />}
+              {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Mobile menu button */}

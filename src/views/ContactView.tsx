@@ -3,12 +3,12 @@ import {
   Mail, 
   Send, 
   CheckCircle2, 
-  Github, 
   MessageSquare, 
   AlertCircle, 
   Clock, 
   ShieldCheck, 
-  Sparkles 
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 
 export const ContactView: React.FC = () => {
@@ -81,20 +81,15 @@ export const ContactView: React.FC = () => {
 
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center space-x-2">
-              <Github className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-              <span>Bug Reports & GitHub</span>
+              <HelpCircle className="w-5 h-5 text-blue-500" />
+              <span>Feature & Bug Reports</span>
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Found a bug or need support for a specialized image codec? Open an issue on our GitHub repository:
+              Found an issue or need support for a specialized image codec? Submit a detailed message using the form.
             </p>
-            <a
-              href="https://github.com/manmeet-bhi/free-converter-tool/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 w-full justify-center px-4 py-3 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors shadow-xs"
-            >
-              <span>Open GitHub Issue &rarr;</span>
-            </a>
+            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+              We review and respond to inquiries within 24–48 hours.
+            </div>
           </div>
 
           <div className="p-6 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-2">

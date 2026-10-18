@@ -4,6 +4,7 @@
  */
 
 import JSZip from 'jszip';
+import { sanitizeSafeFilename } from './security';
 
 export interface FileToZip {
   filename: string;
@@ -19,11 +20,11 @@ export async function createZipArchive(
 
   const zip = new JSZip();
 
-  // Deduplicate filenames if needed
+  // Deduplicate and sanitize filenames
   const nameCounts = new Map<string, number>();
 
   for (const file of files) {
-    let name = file.filename;
+    let name = sanitizeSafeFilename(file.filename, 'image');
     if (nameCounts.has(name)) {
       const count = nameCounts.get(name)! + 1;
       nameCounts.set(name, count);
@@ -53,21 +54,25 @@ export async function createZipArchive(
     }
   );
 
-  downloadBlob(content, zipFilename);
+  downloadBlob(content, sanitizeSafeFilename(zipFilename, 'archive.zip'));
 }
 
 /**
  * Downloads a single Blob to the client device
  */
 export function downloadBlob(blob: Blob, filename: string): void {
+  const safeName = sanitizeSafeFilename(filename, 'download');
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = safeName;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => {
-    document.body.removeChild(a);
+    if (document.body.contains(a)) {
+      document.body.removeChild(a);
+    }
     URL.revokeObjectURL(url);
-  }, 100);
+  }, 200);
 }
+
