@@ -166,7 +166,7 @@ export const ContactView: React.FC = () => {
               For general questions, partnerships, or security inquiries, reach out to our team directly:
             </p>
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 font-mono text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all select-all font-semibold">
-              support@free-converter-tool.com
+              support@free-picture-converter.com
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export const ContactView: React.FC = () => {
                       <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 leading-relaxed">
                         To protect our support inbox, you can submit up to {MAX_CONTACT_SUBMISSIONS_PER_HOUR} messages per hour. Please wait{' '}
                         <strong className="font-semibold text-amber-900 dark:text-amber-100">{rateLimitStatus.minutesRemaining} minute{rateLimitStatus.minutesRemaining === 1 ? '' : 's'}</strong>{' '}
-                        before sending another message, or email us directly at <span className="font-mono text-xs font-semibold bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">support@free-converter-tool.com</span>.
+                        before sending another message, or email us directly at <span className="font-mono text-xs font-semibold bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">support@free-picture-converter.com</span>.
                       </p>
                     </div>
                   </div>

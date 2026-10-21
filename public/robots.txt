@@ -5,4 +5,4 @@ User-agent: *
 Allow: /
 
 # Sitemap Index
-Sitemap: https://freeconvertertool.netlify.app/sitemap.xml
+Sitemap: https://free-picture-converter.netlify.app/sitemap.xml

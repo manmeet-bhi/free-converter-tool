@@ -52,7 +52,7 @@ All canonical URLs, Open Graph images, JSON-LD schemas, and the sitemap dynamica
 export const SITE_URL = (
   typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL
     ? import.meta.env.VITE_SITE_URL
-    : 'https://freeconvertertool.netlify.app'
+    : 'https://free-picture-converter.netlify.app'
 ).replace(/\/$/, '');
 ```
 
@@ -191,7 +191,7 @@ User-agent: *
 Allow: /
 
 # Sitemap Index
-Sitemap: https://freeconvertertool.netlify.app/sitemap.xml
+Sitemap: https://free-picture-converter.netlify.app/sitemap.xml
 ```
 
 ---
@@ -202,7 +202,7 @@ Sitemap: https://freeconvertertool.netlify.app/sitemap.xml
 Go to [search.google.com/search-console](https://search.google.com/search-console) and click **Add property**.
 
 ### Step 2: Choose Property Type
-- **URL prefix**: Enter your exact URL (e.g. `https://freeconvertertool.netlify.app` or your custom domain).
+- **URL prefix**: Enter your exact URL (e.g. `https://free-picture-converter.netlify.app` or your custom domain).
 
 ### Step 3: Verification
 Choose **HTML tag** verification. Copy your verification token (e.g. `google-site-verification=abc123xyz`).

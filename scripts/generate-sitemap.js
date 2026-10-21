@@ -15,7 +15,7 @@ const rootDir = path.resolve(__dirname, '..');
 const publicDir = path.resolve(rootDir, 'public');
 
 // Resolve production domain
-const siteUrl = (process.env.VITE_SITE_URL || 'https://freeconvertertool.netlify.app').replace(/\/$/, '');
+const siteUrl = (process.env.VITE_SITE_URL || 'https://free-picture-converter.netlify.app').replace(/\/$/, '');
 
 // Today's date in YYYY-MM-DD format
 const today = new Date().toISOString().split('T')[0];
