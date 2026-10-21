@@ -251,13 +251,13 @@ export const UrlImageModal: React.FC<UrlImageModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-xs">
               <Link2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="url-modal-title" className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              <h2 id="url-modal-title" className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">
                 Add Images from URL
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
@@ -277,7 +277,7 @@ export const UrlImageModal: React.FC<UrlImageModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-5 sm:p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Progress Bar Display when downloading */}
           {isLoading ? (
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
@@ -403,7 +403,7 @@ export const UrlImageModal: React.FC<UrlImageModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end space-x-3 p-5 sm:p-6 bg-slate-50/70 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-end space-x-3 p-4 sm:p-6 bg-slate-50/70 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}

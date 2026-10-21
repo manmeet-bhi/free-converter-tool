@@ -21,7 +21,7 @@ import { TOOL_LANDING_CONFIGS } from './config/landingPages';
 import { getPageMetadata } from './config/seo';
 import { updatePageSEO } from './utils/seo';
 import { loadImageFromFile, revokeUrl } from './utils/imageProcessor';
-import { detectInputFormat } from './utils/formatSupport';
+import { detectInputFormat, ImageFormat } from './utils/formatSupport';
 
 const SLUG_TO_TAB: Record<string, ActiveTab> = {
   '/': 'home',
@@ -91,7 +91,7 @@ export default function App() {
   });
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('imagekit_theme');
+      const saved = localStorage.getItem('imagetooltip_theme') || localStorage.getItem('imagekit_theme');
       if (saved) return saved === 'dark';
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
@@ -137,10 +137,10 @@ export default function App() {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('imagekit_theme', 'dark');
+      localStorage.setItem('imagetooltip_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('imagekit_theme', 'light');
+      localStorage.setItem('imagetooltip_theme', 'light');
     }
   }, [isDark]);
 
@@ -170,7 +170,7 @@ export default function App() {
 
   // Handle incoming files from Dropzone, clipboard paste, or file pickers
   const handleFilesSelected = useCallback(
-    async (files: File[], defaultTool?: ActiveTab) => {
+    async (files: File[], overrideTargetFormat?: ImageFormat | ActiveTab) => {
       if (!files || files.length === 0) return;
 
       const currentCount = images.length;
@@ -233,7 +233,20 @@ export default function App() {
           }));
 
           const inputFormat = detectInputFormat(file);
-          const targetFormat = inputFormat === 'webp' ? 'jpeg' : 'webp';
+          const landingConfigFormat = TOOL_LANDING_CONFIGS[activeTab]?.targetFormat;
+          let targetFormat: ImageFormat = 'webp';
+
+          if (
+            overrideTargetFormat &&
+            ['jpeg', 'png', 'webp', 'avif', 'bmp', 'ico', 'svg', 'tiff', 'gif'].includes(overrideTargetFormat)
+          ) {
+            targetFormat = overrideTargetFormat as ImageFormat;
+          } else if (landingConfigFormat) {
+            targetFormat = landingConfigFormat;
+          } else {
+            targetFormat = inputFormat === 'webp' ? 'jpeg' : 'webp';
+          }
+
           const lastDot = file.name.lastIndexOf('.');
           const baseName = lastDot !== -1 ? file.name.slice(0, lastDot) : file.name;
           const targetExt = targetFormat === 'jpeg' ? '.jpg' : `.${targetFormat}`;
@@ -285,7 +298,12 @@ export default function App() {
       if (newItems.length > 0) {
         setImages((prev) => [...prev, ...newItems]);
         if (activeTab === 'home') {
-          setActiveTab(defaultTool || 'converter');
+          const nextTab =
+            typeof overrideTargetFormat === 'string' &&
+            !['jpeg', 'png', 'webp', 'avif', 'bmp', 'ico', 'svg', 'tiff', 'gif'].includes(overrideTargetFormat)
+              ? (overrideTargetFormat as ActiveTab)
+              : 'converter';
+          setActiveTab(nextTab);
         }
       }
     },
@@ -358,11 +376,11 @@ export default function App() {
       </main>
 
       {/* Real-Time Upload & Security Scanning Progress Bar */}
-      <UploadProgressBar 
+      <UploadProgressBar
         status={{
           ...uploadStatus,
           onDismissErrors: () => setUploadStatus((prev) => ({ ...prev, errorMessages: [] })),
-        }} 
+        }}
       />
 
       <Footer setActiveTab={setActiveTab} />

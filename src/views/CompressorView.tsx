@@ -4,29 +4,29 @@ import { DropZone } from '../components/DropZone';
 import { CompareSlider } from '../components/CompareSlider';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
 import { ConversionProgressBar } from '../components/ConversionProgressBar';
-import { 
-  getAvailableOutputFormats, 
-  ImageFormat, 
-  detectInputFormat 
+import {
+  getAvailableOutputFormats,
+  ImageFormat,
+  detectInputFormat
 } from '../utils/formatSupport';
-import { 
-  processImage, 
-  formatBytes, 
-  calculateSavings, 
-  revokeUrl 
+import {
+  processImage,
+  formatBytes,
+  calculateSavings,
+  revokeUrl
 } from '../utils/imageProcessor';
 import { createZipArchive, downloadBlob } from '../utils/zipExporter';
-import { 
-  Minimize2, 
-  Download, 
-  Sliders, 
-  Archive, 
-  Trash2, 
-  RefreshCw, 
-  Info, 
-  Lock, 
-  Unlock, 
-  AlertTriangle, 
+import {
+  Minimize2,
+  Download,
+  Sliders,
+  Archive,
+  Trash2,
+  RefreshCw,
+  Info,
+  Lock,
+  Unlock,
+  AlertTriangle,
   Sparkles,
   CheckCircle2,
   Target,
@@ -55,11 +55,13 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<CompressionPreset>('balanced');
   const [quality, setQuality] = useState<number>(0.75);
+  const [qualityInput, setQualityInput] = useState<string>('75');
   const [targetFormat, setTargetFormat] = useState<ImageFormat>('webp');
   const [useTargetSize, setUseTargetSize] = useState<boolean>(false);
   const [targetSizeInput, setTargetSizeInput] = useState<string>('250');
   const [targetSizeUnit, setTargetSizeUnit] = useState<'KB' | 'MB'>('KB');
   const [resizePercent, setResizePercent] = useState<number>(100);
+  const [resizePercentInput, setResizePercentInput] = useState<string>('100');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [compressingFileName, setCompressingFileName] = useState<string>('');
   const [completedCompressCount, setCompletedCompressCount] = useState<number>(0);
@@ -97,13 +99,19 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
     setSelectedPreset(preset);
     if (preset === 'max') {
       setQuality(0.4);
+      setQualityInput('40');
       setResizePercent(90);
+      setResizePercentInput('90');
     } else if (preset === 'balanced') {
       setQuality(0.75);
+      setQualityInput('75');
       setResizePercent(100);
+      setResizePercentInput('100');
     } else if (preset === 'high') {
       setQuality(0.9);
+      setQualityInput('90');
       setResizePercent(100);
+      setResizePercentInput('100');
     }
   };
 
@@ -149,15 +157,15 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
         prev.map((i) =>
           i.id === item.id
             ? {
-                ...i,
-                status: 'done',
-                result,
-                targetFormat,
-                targetQuality: quality,
-                customFilename: newFilename,
-                targetWidth: result.width,
-                targetHeight: result.height,
-              }
+              ...i,
+              status: 'done',
+              result,
+              targetFormat,
+              targetQuality: quality,
+              customFilename: newFilename,
+              targetWidth: result.width,
+              targetHeight: result.height,
+            }
             : i
         )
       );
@@ -206,7 +214,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
     }));
 
     try {
-      await createZipArchive(filesToZip, `imagekit-compressed-${Date.now()}.zip`);
+      await createZipArchive(filesToZip, `imagetooltip-compressed-${Date.now()}.zip`);
     } catch {
       alert('Failed to generate ZIP archive.');
     } finally {
@@ -217,7 +225,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
   const completedCount = images.filter((i) => i.status === 'done').length;
 
   return (
-    <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-6 sm:space-y-8 py-4 sm:py-6 max-w-6xl mx-auto px-3 sm:px-4">
       {/* Hidden file input for adding more images */}
       <input
         ref={addMoreInputRef}
@@ -304,7 +312,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
       {images.length > 0 && activeImage && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Controls Panel (Left 5 Cols) */}
-          <div className="lg:col-span-5 space-y-6 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="lg:col-span-5 space-y-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
             {/* Compression Presets */}
             <div>
               <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2.5">
@@ -323,11 +331,10 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                       key={p.id}
                       type="button"
                       onClick={() => handlePresetChange(p.id as CompressionPreset)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
-                        isSelected
+                      className={`p-3 rounded-xl border text-left transition-all ${isSelected
                           ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
                           : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       <div className="text-sm font-bold">{p.label}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.desc}</div>
@@ -351,13 +358,12 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                       type="button"
                       disabled={!f.canEncode}
                       onClick={() => setTargetFormat(f.id)}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-bold uppercase border transition-all ${
-                        !f.canEncode
+                      className={`py-2.5 px-3 rounded-xl text-sm font-bold uppercase border transition-all ${!f.canEncode
                           ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400'
                           : isSelected
-                          ? 'border-indigo-600 bg-indigo-600 text-white shadow-xs'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
+                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-xs'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
                     >
                       {f.id}
                     </button>
@@ -366,30 +372,65 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
               </div>
             </div>
 
-            {/* Quality Slider */}
+            {/* Quality Slider & Input */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Quality Level:
                 </span>
-                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-base">
-                  {Math.round(quality * 100)}%
-                </span>
+                <div className="flex items-center space-x-1 bg-slate-50 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={qualityInput}
+                    onChange={(e) => {
+                      const valStr = e.target.value;
+                      setQualityInput(valStr);
+                      const num = parseFloat(valStr);
+                      if (!isNaN(num) && num > 0) {
+                        const clamped = Math.max(0.01, Math.min(1.0, num / 100));
+                        setQuality(clamped);
+                        setSelectedPreset('custom');
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseFloat(qualityInput);
+                      if (isNaN(num) || num < 1) {
+                        setQuality(0.05);
+                        setQualityInput('5');
+                      } else if (num > 100) {
+                        setQuality(1.0);
+                        setQualityInput('100');
+                      } else {
+                        const rounded = Math.round(num);
+                        setQuality(rounded / 100);
+                        setQualityInput(rounded.toString());
+                      }
+                    }}
+                    placeholder="75"
+                    className="w-14 sm:w-16 font-mono font-bold text-right text-sm px-1.5 py-0.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    title="Enter custom quality percentage (1-100%)"
+                  />
+                  <span className="font-mono font-bold text-slate-500 dark:text-slate-400 text-xs sm:text-sm">%</span>
+                </div>
               </div>
               <input
                 type="range"
-                min="0.1"
+                min="0.05"
                 max="1.0"
-                step="0.02"
+                step="0.01"
                 value={quality}
                 onChange={(e) => {
-                  setQuality(parseFloat(e.target.value));
+                  const val = parseFloat(e.target.value);
+                  setQuality(val);
+                  setQualityInput(Math.round(val * 100).toString());
                   setSelectedPreset('custom');
                 }}
                 className="w-full accent-indigo-600 cursor-pointer"
               />
               <div className="flex justify-between text-xs text-slate-400 font-mono">
-                <span>Smallest Size (10%)</span>
+                <span>Smallest Size (5%)</span>
                 <span>Balanced (75%)</span>
                 <span>Best Quality (100%)</span>
               </div>
@@ -440,30 +481,66 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
               )}
             </div>
 
-            {/* Resize Percentage */}
+            {/* Scale Dimensions Slider & Input */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Scale Dimensions:
                 </span>
-                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                  {resizePercent}%
-                </span>
+                <div className="flex items-center space-x-1 bg-slate-50 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={resizePercentInput}
+                    onChange={(e) => {
+                      const valStr = e.target.value;
+                      setResizePercentInput(valStr);
+                      const num = parseInt(valStr);
+                      if (!isNaN(num) && num > 0) {
+                        setResizePercent(Math.max(1, Math.min(500, num)));
+                        setSelectedPreset('custom');
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseInt(resizePercentInput);
+                      if (isNaN(num) || num < 1) {
+                        setResizePercent(10);
+                        setResizePercentInput('10');
+                      } else if (num > 500) {
+                        setResizePercent(500);
+                        setResizePercentInput('500');
+                      } else {
+                        setResizePercent(num);
+                        setResizePercentInput(num.toString());
+                      }
+                    }}
+                    placeholder="100"
+                    className="w-14 sm:w-16 font-mono font-bold text-right text-sm px-1.5 py-0.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    title="Enter custom scaling percentage (e.g. 50, 75, 100)"
+                  />
+                  <span className="font-mono font-bold text-slate-500 dark:text-slate-400 text-xs sm:text-sm">%</span>
+                </div>
               </div>
               <input
                 type="range"
-                min="20"
-                max="100"
+                min="10"
+                max={Math.max(100, resizePercent)}
                 step="5"
-                value={resizePercent}
-                onChange={(e) => setResizePercent(parseInt(e.target.value))}
+                value={Math.min(Math.max(100, resizePercent), resizePercent)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  setResizePercent(val);
+                  setResizePercentInput(val.toString());
+                  setSelectedPreset('custom');
+                }}
                 className="w-full accent-indigo-600 cursor-pointer"
               />
               <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-mono">
                 <span>Original: {activeImage.originalDimensions.width}×{activeImage.originalDimensions.height}</span>
                 <span>
-                  Result: {Math.round((activeImage.originalDimensions.width * resizePercent) / 100)}×
-                  {Math.round((activeImage.originalDimensions.height * resizePercent) / 100)}
+                  Result: {Math.max(1, Math.round((activeImage.originalDimensions.width * resizePercent) / 100))}×
+                  {Math.max(1, Math.round((activeImage.originalDimensions.height * resizePercent) / 100))}
                 </span>
               </div>
             </div>
@@ -506,11 +583,10 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                       <button
                         key={item.id}
                         onClick={() => setActiveImageId(item.id)}
-                        className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all p-0.5 ${
-                          isSelected
+                        className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all p-0.5 ${isSelected
                             ? 'border-indigo-600 ring-2 ring-indigo-500/30 scale-105'
                             : 'border-slate-200 dark:border-slate-700 hover:border-slate-400'
-                        }`}
+                          }`}
                         title={item.customFilename}
                       >
                         <img
@@ -529,10 +605,10 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
             )}
 
             {/* Results Banner / Comparison */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 sm:space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg truncate max-w-sm">
+                <div className="min-w-0 max-w-full">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg truncate max-w-xs sm:max-w-sm">
                     {activeImage.customFilename}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
@@ -540,7 +616,7 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setEditingItem(activeImage)}
@@ -554,11 +630,11 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                   {activeImage.result && (
                     <button
                       onClick={() => downloadBlob(activeImage.result!.blob, activeImage.customFilename)}
-                      className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all active:scale-98 flex items-center justify-center"
+                      className="p-2 sm:p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all active:scale-98 flex items-center justify-center"
                       title={`Download ${activeImage.customFilename}`}
                       aria-label={`Download ${activeImage.customFilename}`}
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                 </div>
@@ -569,31 +645,31 @@ export const CompressorView: React.FC<CompressorViewProps> = ({
                 (() => {
                   const savings = calculateSavings(activeImage.originalSize, activeImage.result.fileSizeBytes);
                   return (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80">
-                        <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Original Size</div>
-                        <div className="text-base sm:text-lg font-mono font-bold text-slate-800 dark:text-slate-200 mt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80">
+                        <div className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Original Size</div>
+                        <div className="text-sm sm:text-lg font-mono font-bold text-slate-800 dark:text-slate-200 mt-1">
                           {formatBytes(activeImage.originalSize)}
                         </div>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/60">
-                        <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Compressed</div>
-                        <div className="text-base sm:text-lg font-mono font-bold text-indigo-700 dark:text-indigo-300 mt-1">
+                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900/60">
+                        <div className="text-[11px] sm:text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Compressed</div>
+                        <div className="text-sm sm:text-lg font-mono font-bold text-indigo-700 dark:text-indigo-300 mt-1">
                           {formatBytes(activeImage.result.fileSizeBytes)}
                         </div>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/60">
-                        <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Reduction</div>
-                        <div className="text-base sm:text-lg font-mono font-bold text-emerald-700 dark:text-emerald-300 mt-1">
+                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/60">
+                        <div className="text-[11px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Reduction</div>
+                        <div className="text-sm sm:text-lg font-mono font-bold text-emerald-700 dark:text-emerald-300 mt-1">
                           {savings.isSmaller ? `-${savings.percent}%` : `+${savings.percent}%`}
                         </div>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/60">
-                        <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Saved</div>
-                        <div className="text-base sm:text-lg font-mono font-bold text-purple-700 dark:text-purple-300 mt-1">
+                      <div className="p-2.5 sm:p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/60">
+                        <div className="text-[11px] sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Saved</div>
+                        <div className="text-sm sm:text-lg font-mono font-bold text-purple-700 dark:text-purple-300 mt-1">
                           {savings.isSmaller ? formatBytes(savings.bytesSaved) : '0 B'}
                         </div>
                       </div>

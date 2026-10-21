@@ -33,23 +33,32 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
     setSliderPosition(percent);
   }, []);
 
-  const handleMouseDown = () => setIsDragging(true);
-  const handleTouchStart = () => setIsDragging(true);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore
+    }
+    handleMove(e.clientX);
+  };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (isDragging) {
+      e.preventDefault();
       handleMove(e.clientX);
     }
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging && e.touches[0]) {
-      handleMove(e.touches[0].clientX);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignore
     }
   };
-
-  const handleMouseUp = () => setIsDragging(false);
-  const handleTouchEnd = () => setIsDragging(false);
 
   return (
     <div className="space-y-2 select-none">
@@ -63,14 +72,11 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
 
       <div
         ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onTouchMove={handleTouchMove}
-        onMouseUp={handleMouseUp}
-        onTouchEnd={handleTouchEnd}
-        onMouseLeave={handleMouseUp}
-        className={`relative w-full h-72 sm:h-96 rounded-xl overflow-hidden cursor-ew-resize border border-slate-200 dark:border-slate-800 ${
-          hasTransparency ? 'bg-checkerboard-light dark:bg-checkerboard-dark' : 'bg-slate-950'
-        }`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="relative w-full h-72 sm:h-96 rounded-xl overflow-hidden cursor-ew-resize border border-slate-200 dark:border-slate-800 touch-none select-none bg-slate-950"
       >
         {/* Processed (After) Image - Full width underlayer */}
         <div className="absolute inset-0 flex items-center justify-center p-2">
@@ -109,9 +115,8 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
         >
           {/* Handle */}
           <div
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-white dark:bg-slate-900 border-2 border-blue-500 text-blue-600 shadow-md flex items-center justify-center cursor-ew-resize pointer-events-auto hover:scale-110 active:scale-95 transition-transform"
+            onPointerDown={handlePointerDown}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 border-2 border-blue-500 text-blue-600 shadow-lg flex items-center justify-center cursor-ew-resize pointer-events-auto hover:scale-110 active:scale-95 transition-transform touch-none after:absolute after:-inset-3 after:content-['']"
           >
             <ArrowLeftRight className="w-4 h-4" />
           </div>

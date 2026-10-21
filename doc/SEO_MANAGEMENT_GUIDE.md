@@ -1,6 +1,6 @@
-# Complete SEO Management Guide for ImageKit
+# Complete SEO Management Guide for imagetooltip
 
-Welcome to the comprehensive SEO management guide for **ImageKit** (`free-converter-tool`). This guide details how our production-ready SEO system is architected, how to configure custom domains, add new landing pages, manage metadata and structured data (JSON-LD), and submit your sitemap to Google Search Console.
+Welcome to the comprehensive SEO management guide for **imagetooltip** (`free-converter-tool`). This guide details how our production-ready SEO system is architected, how to configure custom domains, add new landing pages, manage metadata and structured data (JSON-LD), and submit your sitemap to Google Search Console.
 
 ---
 
@@ -71,7 +71,7 @@ export const SITE_URL = (
 
 ## 4. Published SEO Landing Page Routes
 
-ImageKit includes dedicated, high-intent landing pages for all supported formats and tools:
+imagetooltip includes dedicated, high-intent landing pages for all supported formats and tools:
 
 | URL Path | Primary Keyword | Target Tool | Priority |
 | :--- | :--- | :--- | :--- |
@@ -87,7 +87,7 @@ ImageKit includes dedicated, high-intent landing pages for all supported formats
 | `/image-compressor` | Online Image Compressor | Image Compressor | `0.9` |
 | `/resize-image` | Online Image Resizer | Image Resizer | `0.85` |
 | `/format` | Supported Image Formats | Formats Matrix | `0.7` |
-| `/about` | About ImageKit | About Us | `0.5` |
+| `/about` | About imagetooltip | About Us | `0.5` |
 | `/faq` | Frequently Asked Questions | FAQ Knowledge Base | `0.6` |
 | `/contact` | Contact Us & Support | Contact Form | `0.5` |
 | `/privacy` | Privacy Policy | Legal Privacy View | `0.3` |
@@ -110,7 +110,7 @@ Add the metadata entry to `SEO_ROUTES`:
 ```typescript
 '/bmp-to-jpg': {
   slug: '/bmp-to-jpg',
-  title: 'BMP to JPG Converter – Convert Bitmap to JPG Online | ImageKit',
+  title: 'BMP to JPG Converter – Convert Bitmap to JPG Online | imagetooltip',
   description: 'Convert large uncompressed Windows Bitmap images to compressed JPG format online with zero server uploads.',
   keywords: ['bmp to jpg', 'convert bmp to jpg', 'bitmap to jpeg'],
   h1: 'Convert BMP to JPG Online',
@@ -153,7 +153,7 @@ Run `npm run build` and your new page is fully wired, indexable, and listed in `
 
 ## 6. Structured Data (JSON-LD) Implementation
 
-ImageKit automatically creates and injects valid, escaped Schema.org JSON-LD structured data into `<head>`:
+imagetooltip automatically creates and injects valid, escaped Schema.org JSON-LD structured data into `<head>`:
 
 1. **`Organization` Schema**:
    Identifies the publisher, website URL, brand logo, and GitHub repository.

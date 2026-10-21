@@ -19,7 +19,7 @@ export const PrivacyView: React.FC = () => {
         
         {/* Preamble */}
         <p className="text-slate-600 dark:text-slate-400 font-medium">
-          This agreement describes the conditions and rules under which the operator of imagecompressor.com ("we") offers you its services at ImageKit.
+          This agreement describes the conditions and rules under which the operator of imagetooltip.com ("we") offers you its services at imagetooltip.
         </p>
 
         {/* Terms Section */}
@@ -29,22 +29,22 @@ export const PrivacyView: React.FC = () => {
           </h2>
           <ol className="space-y-3 list-decimal list-outside ml-5 marker:font-semibold marker:text-slate-400 dark:marker:text-slate-500">
             <li className="pl-1">
-              Use of the imagecompressor.com service is at your own risk.
+              Use of the imagetooltip.com service is at your own risk.
             </li>
             <li className="pl-1">
               All processing is performed in your browser. See Privacy section below.
             </li>
             <li className="pl-1">
-              You may use the imagecompressor.com service for any purpose, personal or commercial.
+              You may use the imagetooltip.com service for any purpose, personal or commercial.
             </li>
             <li className="pl-1">
-              We reserve the right to change or cease any services at imagecompressor.com at any time.
+              We reserve the right to change or cease any services at imagetooltip.com at any time.
             </li>
             <li className="pl-1">
               We reserve the right to change the terms of this agreement without notice.
             </li>
             <li className="pl-1">
-              The imagecompressor.com service does not provide any guarantees.
+              The imagetooltip.com service does not provide any guarantees.
             </li>
           </ol>
         </section>

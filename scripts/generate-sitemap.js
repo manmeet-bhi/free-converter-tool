@@ -60,7 +60,7 @@ ${urlsXml}
 }
 
 function generateRobotsTxt() {
-  return `# Robots.txt for ImageKit
+  return `# Robots.txt for imagetooltip
 # Allow search engines full access to public landing pages
 
 User-agent: *

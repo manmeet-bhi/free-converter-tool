@@ -54,7 +54,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
     faqs: [
       {
         question: 'What happens to transparent areas in my PNG when converted to JPG?',
-        answer: 'Because the JPEG format does not support transparency (alpha channels), transparent pixels are filled with a solid background color. ImageKit allows you to pick any matte color (defaulting to clean white).',
+        answer: 'Because the JPEG format does not support transparency (alpha channels), transparent pixels are filled with a solid background color. imagetooltip allows you to pick any matte color (defaulting to clean white).',
       },
       {
         question: 'Will converting PNG to JPG decrease image quality?',
@@ -62,7 +62,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         question: 'Is my data uploaded to any cloud server?',
-        answer: 'No. ImageKit processes all images entirely on your device using HTML5 Canvas and local browser APIs. Not a single byte is uploaded to any remote server.',
+        answer: 'No. imagetooltip processes all images entirely on your device using HTML5 Canvas and local browser APIs. Not a single byte is uploaded to any remote server.',
       },
       {
         question: 'Can I convert multiple PNG files at the same time?',
@@ -137,7 +137,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         question: 'Are there any limits on file resolution?',
-        answer: 'ImageKit can process high-resolution images up to 16,384 x 16,384 pixels, depending on your device GPU and memory.',
+        answer: 'imagetooltip can process high-resolution images up to 16,384 x 16,384 pixels, depending on your device GPU and memory.',
       },
     ],
     relatedTools: [
@@ -146,13 +146,12 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       { slug: '/image-compressor', label: 'Image Compressor', desc: 'Compress images to an exact target KB.' },
     ],
   },
-
   'png-to-webp': {
     slug: '/png-to-webp',
     toolType: 'converter',
     targetFormat: 'webp',
     acceptedFormats: ['.png'],
-    badge: 'Next-Gen Web Optimization',
+    badge: 'Next-Gen Web Performance',
     h1: 'Convert PNG to WebP Online',
     intro: 'Convert heavy PNG graphics into modern WebP format while preserving 100% of your transparent alpha channels. Achieve 50% to 80% smaller file sizes, dramatically improve Google Core Web Vitals (LCP), and reduce bandwidth costs.',
     sourceFormatName: 'PNG',
@@ -235,7 +234,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         title: 'Convert to PNG',
-        desc: 'ImageKit decodes the WebP pixels and repackages them into lossless 32-bit PNG format.',
+        desc: 'imagetooltip decodes the WebP pixels and repackages them into lossless 32-bit PNG format.',
       },
       {
         title: 'Download & Edit',
@@ -279,7 +278,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         question: 'Are there any limits on batch size?',
-        answer: 'You can convert as many files as your device memory allows. There are no artificial limits imposed by ImageKit.',
+        answer: 'You can convert as many files as your device memory allows. There are no artificial limits imposed by imagetooltip.',
       },
     ],
     relatedTools: [
@@ -350,7 +349,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         question: 'Is converting JPG to WebP reversible?',
-        answer: 'Yes, you can easily convert WebP back to JPG or PNG anytime using ImageKit.',
+        answer: 'Yes, you can easily convert WebP back to JPG or PNG anytime using imagetooltip.',
       },
     ],
     relatedTools: [
@@ -421,7 +420,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
       },
       {
         question: 'Are there any hidden costs or watermarks?',
-        answer: 'None! ImageKit is 100% free and never watermarks or alters your original images.',
+        answer: 'None! imagetooltip is 100% free and never watermarks or alters your original images.',
       },
     ],
     relatedTools: [
@@ -551,7 +550,7 @@ export const TOOL_LANDING_CONFIGS: Record<string, ToolPageConfig> = {
     faqs: [
       {
         question: 'How does Target Size compression work?',
-        answer: 'ImageKit uses an intelligent iterative binary search algorithm in your browser to calculate the precise quality setting needed to hit your target file size in kilobytes.',
+        answer: 'imagetooltip uses an intelligent iterative binary search algorithm in your browser to calculate the precise quality setting needed to hit your target file size in kilobytes.',
       },
       {
         question: 'Will compressing my images ruin the visual quality?',

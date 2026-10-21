@@ -1,5 +1,5 @@
 {
-  "name": "ImageKit – Image Converter & Compressor",
+  "name": "imagetooltip – Image Converter & Compressor",
   "description": "Fast, private browser-based image converter, compressor, and resizer. Convert between JPG, PNG, WebP, BMP, and ICO without server uploads.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

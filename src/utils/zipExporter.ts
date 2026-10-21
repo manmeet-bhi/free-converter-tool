@@ -13,7 +13,7 @@ export interface FileToZip {
 
 export async function createZipArchive(
   files: FileToZip[],
-  zipFilename = 'imagekit-processed-images.zip',
+  zipFilename = 'imagetooltip-processed-images.zip',
   onProgress?: (percent: number) => void
 ): Promise<void> {
   if (files.length === 0) return;

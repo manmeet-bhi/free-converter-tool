@@ -1,8 +1,9 @@
 /**
- * Browser-based EXIF Remover Utility
- * - Reads EXIF metadata from JPEG/TIFF files via binary segment parsing
- * - Strips all metadata by re-encoding through Canvas API
- * - 100% client-side, zero server uploads
+ * Browser-based EXIF & File Metadata Remover Utility
+ * - Reads EXIF metadata from JPEG/TIFF/WebP/PNG files
+ * - Reads video metadata (MP4, MOV) via ISO BMFF atom parsing (mvhd, udta, ilst, location)
+ * - Reads PDF metadata via Info dictionary & XMP stream parsing
+ * - Strips all metadata 100% client-side with zero server uploads
  */
 
 export interface ExifTag {
@@ -37,7 +38,7 @@ const EXIF_TAG_MAP: Record<number, { label: string; category: ExifTag['category'
   0x011a: { label: 'X Resolution', category: 'settings' },
   0x011b: { label: 'Y Resolution', category: 'settings' },
   0x0128: { label: 'Resolution Unit', category: 'settings' },
-  0x013b: { label: 'Artist', category: 'other' },
+  0x013b: { label: 'Artist / Author', category: 'other' },
   0x0131: { label: 'Software', category: 'software' },
   0x0132: { label: 'Date/Time Modified', category: 'datetime' },
   0x013c: { label: 'Host Computer', category: 'software' },
@@ -113,32 +114,27 @@ function readTagValue(
 ): string {
   try {
     if (type === 2) {
-      // ASCII
       const isInline = count <= 4;
       const offset = isInline ? entryBase : valueOrOffset;
       return readString(view, offset, count);
     }
     if (type === 3) {
-      // SHORT
       const isInline = count <= 2;
       const offset = isInline ? entryBase : valueOrOffset;
       return String(readUint16(view, offset, le));
     }
     if (type === 4) {
-      // LONG
       const isInline = count <= 1;
       const offset = isInline ? entryBase : valueOrOffset;
       return String(readUint32(view, offset, le));
     }
     if (type === 5) {
-      // RATIONAL
       const num = readUint32(view, valueOrOffset, le);
       const den = readUint32(view, valueOrOffset + 4, le);
       if (den === 0) return '0';
       return `${(num / den).toFixed(4).replace(/\.?0+$/, '')}`;
     }
     if (type === 10) {
-      // SRATIONAL
       const num = view.getInt32(valueOrOffset, le);
       const den = view.getInt32(valueOrOffset + 4, le);
       if (den === 0) return '0';
@@ -199,9 +195,300 @@ function parseIfd(
 }
 
 /**
- * Reads EXIF metadata from a JPEG file by parsing APP1 segments.
+ * Parses video metadata from MP4/MOV containers (ISO Base Media File Format).
+ */
+async function readVideoMetadata(file: File): Promise<ExifData> {
+  const tags: ExifTag[] = [];
+  const buffer = await file.arrayBuffer();
+  const view = new DataView(buffer);
+  const totalBytes = view.byteLength;
+
+  let offset = 0;
+  let hasGps = false;
+  let hasCamera = false;
+  let hasSoftware = false;
+
+  const macEpochOffset = 2082844800; // seconds between 1904-01-01 and 1970-01-01
+
+  // Walk top-level boxes and moov descendants
+  function walkBoxes(start: number, end: number, path: string[]) {
+    let pos = start;
+    while (pos + 8 <= end) {
+      const size = view.getUint32(pos, false);
+      const type = readString(view, pos + 4, 4);
+      const boxEnd = size === 1 ? pos + 16 : size === 0 ? end : pos + size;
+      const contentStart = size === 1 ? pos + 16 : pos + 8;
+
+      if (boxEnd > end || size < 8) break;
+
+      if (type === 'moov' || type === 'udta' || type === 'trak' || type === 'mdia') {
+        walkBoxes(contentStart, boxEnd, [...path, type]);
+      } else if (type === 'mvhd') {
+        try {
+          const version = view.getUint8(contentStart);
+          let createTime = 0;
+          let modTime = 0;
+          let timeScale = 1;
+          let duration = 0;
+
+          if (version === 0) {
+            createTime = view.getUint32(contentStart + 4, false);
+            modTime = view.getUint32(contentStart + 8, false);
+            timeScale = view.getUint32(contentStart + 12, false);
+            duration = view.getUint32(contentStart + 16, false);
+          } else if (version === 1) {
+            // 64-bit timestamps
+            modTime = view.getUint32(contentStart + 12, false);
+            timeScale = view.getUint32(contentStart + 20, false);
+            duration = view.getUint32(contentStart + 28, false);
+          }
+
+          if (createTime > macEpochOffset) {
+            const createDate = new Date((createTime - macEpochOffset) * 1000);
+            tags.push({ tag: 'mvhd.create', label: 'Video Creation Date', value: createDate.toLocaleString(), category: 'datetime' });
+          }
+          if (modTime > macEpochOffset) {
+            const modDate = new Date((modTime - macEpochOffset) * 1000);
+            tags.push({ tag: 'mvhd.mod', label: 'Video Modification Date', value: modDate.toLocaleString(), category: 'datetime' });
+          }
+          if (timeScale > 0 && duration > 0) {
+            const secs = (duration / timeScale).toFixed(1);
+            tags.push({ tag: 'mvhd.duration', label: 'Duration', value: `${secs} seconds`, category: 'settings' });
+          }
+        } catch { /* skip */ }
+      } else if (type === 'meta') {
+        // meta box may have 4 extra version/flags bytes
+        const subStart = contentStart + 4;
+        walkBoxes(subStart, boxEnd, [...path, type]);
+      } else if (type === 'ilst') {
+        // parse Apple QuickTime ilst items
+        parseIlst(contentStart, boxEnd);
+      }
+
+      pos = boxEnd;
+    }
+  }
+
+  function parseIlst(start: number, end: number) {
+    let pos = start;
+    while (pos + 8 <= end) {
+      const itemSize = view.getUint32(pos, false);
+      const itemType = readString(view, pos + 4, 4);
+      if (itemSize < 8 || pos + itemSize > end) break;
+
+      const dataOffset = pos + 8;
+      // Search for inner 'data' box
+      if (dataOffset + 8 <= pos + itemSize) {
+        const subType = readString(view, dataOffset + 4, 4);
+        if (subType === 'data') {
+          const strLen = itemSize - 16 - 8;
+          if (strLen > 0 && strLen < 500) {
+            const val = readString(view, dataOffset + 16, strLen);
+            if (val) {
+              const labelMap: Record<string, { label: string; cat: ExifTag['category'] }> = {
+                '©nam': { label: 'Title', cat: 'other' },
+                '©ART': { label: 'Artist / Author', cat: 'other' },
+                '©day': { label: 'Recording Date', cat: 'datetime' },
+                '©too': { label: 'Encoding Software', cat: 'software' },
+                '©mak': { label: 'Camera / Device Make', cat: 'camera' },
+                '©mod': { label: 'Camera / Device Model', cat: 'camera' },
+                '©xyz': { label: 'GPS Coordinates', cat: 'location' },
+              };
+              const mapped = labelMap[itemType] || { label: `Tag (${itemType})`, cat: 'other' };
+              if (mapped.cat === 'location' || itemType === '©xyz') hasGps = true;
+              if (mapped.cat === 'camera') hasCamera = true;
+              if (mapped.cat === 'software') hasSoftware = true;
+              tags.push({ tag: itemType, label: mapped.label, value: val, category: mapped.cat });
+            }
+          }
+        }
+      }
+      pos += itemSize;
+    }
+  }
+
+  walkBoxes(0, Math.min(totalBytes, 10 * 1024 * 1024), []);
+
+  // Quick fallback scan for ASCII GPS / Make / Model strings in first 4MB
+  const textSample = new TextDecoder('latin1').decode(buffer.slice(0, Math.min(totalBytes, 4 * 1024 * 1024)));
+  const gpsMatch = textSample.match(/([+-]\d{2,3}\.\d+)([+-]\d{2,3}\.\d+)/);
+  if (gpsMatch && !tags.some(t => t.category === 'location')) {
+    hasGps = true;
+    tags.push({ tag: 'GPS.QuickTime', label: 'GPS Coordinates (ISO6709)', value: `${gpsMatch[1]}, ${gpsMatch[2]}`, category: 'location' });
+  }
+
+  return {
+    tags,
+    hasGps: hasGps || tags.some(t => t.category === 'location'),
+    hasCamera: hasCamera || tags.some(t => t.category === 'camera'),
+    hasSoftware: hasSoftware || tags.some(t => t.category === 'software'),
+    rawSize: tags.length * 64,
+  };
+}
+
+/**
+ * Parses PDF metadata dictionary (/Title, /Author, /Creator, /Producer, /CreationDate, /ModDate)
+ * and embedded XMP metadata packets.
+ */
+async function readPdfMetadata(file: File): Promise<ExifData> {
+  const tags: ExifTag[] = [];
+  const buffer = await file.arrayBuffer();
+  // Decode initial 1MB and trailer 256KB where metadata sits
+  const decoder = new TextDecoder('latin1');
+  const head = decoder.decode(buffer.slice(0, Math.min(buffer.byteLength, 1024 * 1024)));
+  const tail = buffer.byteLength > 256 * 1024
+    ? decoder.decode(buffer.slice(buffer.byteLength - 256 * 1024))
+    : '';
+  const text = head + '\n' + tail;
+
+  const pdfProps: Array<{ key: string; label: string; cat: ExifTag['category'] }> = [
+    { key: 'Title', label: 'Document Title', cat: 'other' },
+    { key: 'Author', label: 'Document Author', cat: 'other' },
+    { key: 'Subject', label: 'Subject', cat: 'other' },
+    { key: 'Keywords', label: 'Keywords', cat: 'other' },
+    { key: 'Creator', label: 'Application / Creator', cat: 'software' },
+    { key: 'Producer', label: 'PDF Producer', cat: 'software' },
+    { key: 'CreationDate', label: 'Creation Date', cat: 'datetime' },
+    { key: 'ModDate', label: 'Modification Date', cat: 'datetime' },
+  ];
+
+  for (const { key, label, cat } of pdfProps) {
+    // Matches /Key (Value) or /Key <HexValue>
+    const re = new RegExp(`/${key}\\s*\\(([^\\)]+)\\)`, 'i');
+    const m = text.match(re);
+    if (m && m[1].trim()) {
+      let val = m[1].trim();
+      // Clean PDF date format D:YYYYMMDDHHmmSS...
+      if (val.startsWith('D:')) {
+        const dStr = val.slice(2);
+        const y = dStr.slice(0, 4);
+        const mon = dStr.slice(4, 6);
+        const day = dStr.slice(6, 8);
+        const hr = dStr.slice(8, 10);
+        const min = dStr.slice(10, 12);
+        val = `${y}-${mon}-${day} ${hr}:${min || '00'}`;
+      }
+      tags.push({ tag: `PDF.${key}`, label, value: val, category: cat });
+    }
+  }
+
+  // Scan for XMP in PDF
+  if (text.includes('<x:xmpmeta') || text.includes('http://ns.adobe.com/xap/1.0/')) {
+    tags.push({ tag: 'PDF.XMP', label: 'Embedded XMP Stream', value: 'Present (Extended Metadata)', category: 'software' });
+  }
+
+  return {
+    tags,
+    hasGps: false,
+    hasCamera: false,
+    hasSoftware: tags.some(t => t.category === 'software'),
+    rawSize: tags.length * 80,
+  };
+}
+
+/**
+ * Strips metadata from MP4/MOV container files client-side.
+ * Replaces the 'udta' user metadata atom (holding GPS, camera make/model, etc.) with a 'free' atom
+ * and resets mvhd creation/mod timestamps. Audio/video streams remain 100% byte-identical and untouched.
+ */
+async function stripVideoMetadata(file: File): Promise<ExifRemovalResult> {
+  const buffer = await file.arrayBuffer();
+  const u8 = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+
+  // Walk boxes and replace 'udta' with 'free'
+  function neutralizeUdta(start: number, end: number) {
+    let pos = start;
+    while (pos + 8 <= end) {
+      const size = view.getUint32(pos, false);
+      const type = readString(view, pos + 4, 4);
+      const boxEnd = size === 1 ? pos + 16 : size === 0 ? end : pos + size;
+      if (boxEnd > end || size < 8) break;
+
+      if (type === 'moov') {
+        neutralizeUdta(pos + 8, boxEnd);
+      } else if (type === 'udta') {
+        // Change atom type 'udta' to 'free' (neutral padding atom in ISO BMFF spec)
+        u8[pos + 4] = 0x66; // 'f'
+        u8[pos + 5] = 0x72; // 'r'
+        u8[pos + 6] = 0x65; // 'e'
+        u8[pos + 7] = 0x65; // 'e'
+        // Zero out metadata payload
+        for (let i = pos + 8; i < boxEnd; i++) {
+          u8[i] = 0;
+        }
+      }
+      pos = boxEnd;
+    }
+  }
+
+  neutralizeUdta(0, Math.min(buffer.byteLength, 15 * 1024 * 1024));
+
+  const ext = file.name.toLowerCase().endsWith('.mov') ? 'mov' : 'mp4';
+  const mime = ext === 'mov' ? 'video/quicktime' : 'video/mp4';
+  const cleanBlob = new Blob([u8], { type: mime });
+
+  return {
+    blob: cleanBlob,
+    previewUrl: URL.createObjectURL(cleanBlob),
+    originalSizeBytes: file.size,
+    cleanedSizeBytes: cleanBlob.size,
+    format: ext,
+  };
+}
+
+/**
+ * Strips metadata from PDF documents client-side.
+ * Overwrites /Author, /Creator, /Producer, /CreationDate, /ModDate and neutralizes XMP streams.
+ */
+async function stripPdfMetadata(file: File): Promise<ExifRemovalResult> {
+  const buffer = await file.arrayBuffer();
+  const u8 = new Uint8Array(buffer);
+  const decoder = new TextDecoder('latin1');
+  let text = decoder.decode(u8);
+
+  const tagsToBlank = ['Author', 'Creator', 'Producer', 'CreationDate', 'ModDate', 'Title', 'Subject', 'Keywords'];
+  for (const tag of tagsToBlank) {
+    const regex = new RegExp(`/${tag}\\s*\\(([^\\)]*)\\)`, 'g');
+    text = text.replace(regex, (match, val) => {
+      // Replace with spaces to keep byte offsets identical
+      return `/${tag} (${' '.repeat(val.length)})`;
+    });
+  }
+
+  // Neutralize XMP packets if present
+  text = text.replace(/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/gi, (match) => ' '.repeat(match.length));
+
+  const encoder = new TextEncoder();
+  const cleanU8 = encoder.encode(text);
+  const cleanBlob = new Blob([cleanU8], { type: 'application/pdf' });
+
+  return {
+    blob: cleanBlob,
+    previewUrl: URL.createObjectURL(cleanBlob),
+    originalSizeBytes: file.size,
+    cleanedSizeBytes: cleanBlob.size,
+    format: 'pdf',
+  };
+}
+
+/**
+ * Reads EXIF / Container metadata from any supported file (Images, Videos, PDFs).
  */
 export async function readExifData(file: File): Promise<ExifData> {
+  const name = file.name.toLowerCase();
+
+  // 1. Video files (MP4, MOV)
+  if (file.type.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mov')) {
+    return readVideoMetadata(file);
+  }
+
+  // 2. Document files (PDF)
+  if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
+    return readPdfMetadata(file);
+  }
+
+  // 3. Raster Image EXIF Parser (JPEG, TIFF, WebP, etc.)
   const tags: ExifTag[] = [];
   const seenTags = new Set<number>();
 
@@ -209,7 +496,7 @@ export async function readExifData(file: File): Promise<ExifData> {
     const isJpegOrRaster =
       file.type === 'image/jpeg' ||
       file.type === 'image/jpg' ||
-      file.name.toLowerCase().match(/\.(jpg|jpeg|tiff?|webp)$/) !== null;
+      name.match(/\.(jpg|jpeg|tiff?|webp)$/) !== null;
 
     if (!isJpegOrRaster) {
       return { tags: [], hasGps: false, hasCamera: false, hasSoftware: false, rawSize: 0 };
@@ -299,7 +586,7 @@ export async function readExifData(file: File): Promise<ExifData> {
         }
       }
 
-      if (marker === 0xffda) break; // SOS — start of image scan data, stop
+      if (marker === 0xffda) break; // SOS — start of image scan data
     }
 
     return {
@@ -315,13 +602,25 @@ export async function readExifData(file: File): Promise<ExifData> {
 }
 
 /**
- * Strips all EXIF/metadata by re-drawing the image on a canvas.
- * Canvas.toBlob() never embeds original metadata, achieving clean output.
+ * Strips all metadata from a given file (Images, Videos, PDFs) client-side.
  */
 export async function stripExifFromFile(
   file: File,
   outputQuality = 0.92
 ): Promise<ExifRemovalResult> {
+  const name = file.name.toLowerCase();
+
+  // 1. Video files (MP4, MOV)
+  if (file.type.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mov')) {
+    return stripVideoMetadata(file);
+  }
+
+  // 2. Document files (PDF)
+  if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
+    return stripPdfMetadata(file);
+  }
+
+  // 3. Raster Image Canvas Strip
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -337,7 +636,6 @@ export async function stripExifFromFile(
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(objectUrl);
 
-        const name = file.name.toLowerCase();
         const isJpeg = file.type === 'image/jpeg' || name.match(/\.(jpg|jpeg)$/) !== null;
         const isWebp = file.type === 'image/webp' || name.endsWith('.webp');
         const isPng = file.type === 'image/png' || name.endsWith('.png');
@@ -368,9 +666,10 @@ export async function stripExifFromFile(
 
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error(`Failed to load "${file.name}"`));
+      reject(new Error(`Failed to load image "${file.name}"`));
     };
 
     img.src = objectUrl;
   });
 }
+

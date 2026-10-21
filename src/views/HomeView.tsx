@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActiveTab } from '../types';
 import { DropZone } from '../components/DropZone';
 import {
@@ -17,7 +18,11 @@ import {
   Briefcase,
   GraduationCap,
   CloudOff,
-  Trash2
+  Trash2,
+  Sliders,
+  Palette,
+  Film,
+  ArrowRight
 } from 'lucide-react';
 import { isWebpEncodingSupported, isAvifEncodingSupported } from '../utils/formatSupport';
 
@@ -27,6 +32,7 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelected }) => {
+  const { t } = useTranslation();
   const supportsWebp = isWebpEncodingSupported();
 
   return (
@@ -34,14 +40,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
       {/* Hero Section */}
       <div className="text-center max-w-4xl mx-auto space-y-4 px-4">
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-          Convert &amp; Compress
+          {t('hero.title', 'Convert & Compress')}
         </h1>
         {/* Hero DropZone */}
         <div className="pt-4 max-w-2xl mx-auto">
           <DropZone
             onFilesSelected={(files) => onFilesSelected(files, 'converter')}
-            title="Drop images here to start"
-            subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
+            title={t('hero.dropzoneTitle', 'Drop images here to start')}
+            subtitle={t('hero.dropzoneSubtitle', 'JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO')}
           />
         </div>
       </div>
@@ -56,10 +62,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <Maximize2 className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Perfect Quality
+                {t('features.qualityTitle', 'Perfect Quality')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Advanced encoding algorithms preserve crisp details and color accuracy without degradation.
+                {t('features.qualityDesc', 'Advanced encoding algorithms preserve crisp details and color accuracy without degradation.')}
               </p>
             </div>
 
@@ -69,10 +75,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <Zap className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Lightning Fast
+                {t('features.fastTitle', 'Lightning Fast')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Instant client-side processing leverages local hardware acceleration for real-time speed.
+                {t('features.fastDesc', 'Instant client-side processing leverages local hardware acceleration for real-time speed.')}
               </p>
             </div>
 
@@ -82,10 +88,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <Wand2 className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Easy To Use
+                {t('features.easyTitle', 'Easy To Use')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Just drop your files and let our tools do the rest in one simple, intuitive click.
+                {t('features.easyDesc', 'Just drop your files and let our tools do the rest in one simple, intuitive click.')}
               </p>
             </div>
 
@@ -95,10 +101,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <Lightbulb className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Works Anywhere
+                {t('features.anywhereTitle', 'Works Anywhere')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                100% browser-based with zero install. Seamless on Windows, macOS, Linux, iOS & Android.
+                {t('features.anywhereDesc', '100% browser-based with zero install. Seamless on Windows, macOS, Linux, iOS & Android.')}
               </p>
             </div>
 
@@ -108,10 +114,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <ShieldCheck className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Privacy Guaranteed
+                {t('features.privacyTitle', 'Privacy Guaranteed')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Your photos never leave your device. All conversions run locally inside your browser.
+                {t('features.privacyDesc', 'Your photos never leave your device. All conversions run locally inside your browser.')}
               </p>
             </div>
 
@@ -121,10 +127,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                 <Heart className="w-7 h-7 stroke-[1.8]" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Free to Use
+                {t('features.freeTitle', 'Free to Use')}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                No subscriptions, no hidden watermarks, and no limits. Completely free forever.
+                {t('features.freeDesc', 'No subscriptions, no hidden watermarks, and no limits. Completely free forever.')}
               </p>
             </div>
           </div>
@@ -191,14 +197,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                   3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Resize Image"</strong> button to resize the image.
                 </li>
               </ol>
-              <div className="pt-1">
-                <button
-                  onClick={() => setActiveTab('resizer')}
-                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                >
-                  Go to Image Resizer &rarr;
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -260,14 +258,172 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                   3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Download"</strong> button to save the optimized file.
                 </li>
               </ol>
-              <div className="pt-1">
-                <button
-                  onClick={() => setActiveTab('compressor')}
-                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                >
-                  Go to Image Compressor &rarr;
-                </button>
-              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Format Optimization Guides: JPEG/WebP, PNG, GIF */}
+      <section className="max-w-2xl mx-auto px-4 space-y-6">
+        <div className="text-center mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            Smart Compression by Format
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Tailored algorithms built specifically for photos, transparent graphics, and animated media.
+          </p>
+        </div>
+
+        {/* 1. JPEG & WebP Compression */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+            {/* Visual Illustration */}
+            <div className="bg-slate-100 dark:bg-[#1f242d] rounded-2xl p-5 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80 min-h-[160px] sm:min-h-[190px]">
+              <svg viewBox="0 0 250 130" fill="none" stroke="currentColor" className="w-full max-w-[220px] h-auto text-slate-800 dark:text-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <g transform="translate(15, 12)">
+                  <rect x="0" y="0" width="80" height="64" rx="10" strokeWidth="2.2" />
+                  <circle cx="24" cy="22" r="6" strokeWidth="2" />
+                  <path d="M4 52 L28 32 L46 44 L58 34 L76 50" strokeWidth="2" />
+                  <rect x="5" y="5" width="28" height="12" rx="4" fill="currentColor" className="text-blue-100 dark:text-blue-950/80" stroke="none" />
+                  <text x="19" y="14" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold" stroke="none" className="text-blue-600 dark:text-blue-400">JPG</text>
+                </g>
+                <g transform="translate(108, 16)">
+                  <text x="0" y="10" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-slate-500 dark:text-slate-400">Quality</text>
+                  <text x="120" y="10" textAnchor="end" fill="currentColor" fontSize="11" fontWeight="bold" stroke="none" className="text-blue-600 dark:text-blue-400">80%</text>
+                  <line x1="0" y1="22" x2="120" y2="22" strokeWidth="4" className="text-slate-200 dark:text-slate-700" />
+                  <line x1="0" y1="22" x2="96" y2="22" strokeWidth="4" className="text-blue-600 dark:text-blue-400" />
+                  <circle cx="96" cy="22" r="7" fill="currentColor" className="text-white dark:text-slate-900" strokeWidth="3" />
+                  <rect x="0" y="38" width="120" height="18" rx="6" fill="currentColor" className="text-emerald-50 dark:text-emerald-950/60" stroke="none" />
+                  <text x="60" y="51" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold" stroke="none" className="text-emerald-600 dark:text-emerald-400">-75% File Size</text>
+                </g>
+                <g transform="translate(15, 92)">
+                  <rect x="0" y="0" width="215" height="26" rx="8" fill="currentColor" className="text-slate-200/60 dark:text-slate-800/80" stroke="none" />
+                  <text x="12" y="17" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-slate-700 dark:text-slate-300">WebP:</text>
+                  <text x="52" y="17" fill="currentColor" fontSize="10" stroke="none" className="text-slate-600 dark:text-slate-400">25–35% smaller than JPEG</text>
+                </g>
+              </svg>
+            </div>
+
+            {/* Explanation & Controls */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                JPEG &amp; WebP Compression
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                The engine analyzes the file's quantization tables to detect original quality, defaulting to <strong className="text-slate-900 dark:text-white font-semibold">80%</strong> for the sweet spot between high visual detail and tiny file size.
+              </p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Fine-tune the slider anytime—higher values preserve fine micro-details, while lower values reduce kilobytes. For even greater performance, <strong className="text-slate-900 dark:text-white font-semibold">WebP achieves 25–35% smaller files</strong> than JPEG at equivalent quality.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. PNG Optimization */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+            {/* Visual Illustration */}
+            <div className="bg-slate-100 dark:bg-[#1f242d] rounded-2xl p-5 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80 min-h-[160px] sm:min-h-[190px]">
+              <svg viewBox="0 0 250 130" fill="none" stroke="currentColor" className="w-full max-w-[220px] h-auto text-slate-800 dark:text-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <g transform="translate(15, 12)">
+                  <rect x="0" y="0" width="76" height="66" rx="10" strokeWidth="2" />
+                  <path d="M0 22 H76 M0 44 H76 M25 0 V66 M50 0 V66" strokeWidth="1" strokeDasharray="2 2" className="text-slate-300 dark:text-slate-700" />
+                  <path d="M38 14 L58 33 L38 52 L18 33 Z" fill="currentColor" className="text-emerald-500/20" strokeWidth="2.2" />
+                  <circle cx="38" cy="33" r="6" fill="currentColor" className="text-emerald-600 dark:text-emerald-400" stroke="none" />
+                </g>
+                <g transform="translate(108, 16)">
+                  <text x="0" y="10" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-slate-500 dark:text-slate-400">Indexed Palette</text>
+                  <text x="120" y="10" textAnchor="end" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-emerald-600 dark:text-emerald-400">PNG8</text>
+                  <g transform="translate(0, 18)">
+                    <circle cx="8" cy="8" r="6" fill="#3b82f6" stroke="none" />
+                    <circle cx="28" cy="8" r="6" fill="#10b981" stroke="none" />
+                    <circle cx="48" cy="8" r="6" fill="#f59e0b" stroke="none" />
+                    <circle cx="68" cy="8" r="6" fill="#ec4899" stroke="none" />
+                    <circle cx="88" cy="8" r="6" fill="#8b5cf6" stroke="none" />
+                    <circle cx="108" cy="8" r="6" fill="#06b6d4" stroke="none" />
+                  </g>
+                  <g transform="translate(0, 42)">
+                    <text x="0" y="8" fill="currentColor" fontSize="9" stroke="none" className="text-slate-500 dark:text-slate-400">Max Colors</text>
+                    <text x="120" y="8" textAnchor="end" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-slate-700 dark:text-slate-300">256</text>
+                    <line x1="0" y1="16" x2="120" y2="16" strokeWidth="3" className="text-slate-200 dark:text-slate-700" />
+                    <line x1="0" y1="16" x2="105" y2="16" strokeWidth="3" className="text-emerald-500" />
+                    <circle cx="105" cy="16" r="5" fill="currentColor" className="text-white dark:text-slate-900" strokeWidth="2.5" />
+                  </g>
+                </g>
+                <g transform="translate(15, 92)">
+                  <rect x="0" y="0" width="215" height="26" rx="8" fill="currentColor" className="text-emerald-50 dark:text-emerald-950/60" stroke="none" />
+                  <text x="107" y="17" textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-emerald-700 dark:text-emerald-400">
+                    100% Alpha Transparency Preserved
+                  </text>
+                </g>
+              </svg>
+            </div>
+
+            {/* Explanation & Controls */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                PNG Palette Optimization
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                PNG images are converted to compact <strong className="text-slate-900 dark:text-white font-semibold">PNG8 format with up to 256 colors</strong>. This is perfect for web icons, logos, screenshots, and line illustrations while preserving clean transparency.
+              </p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                The Colors slider lets you reduce the palette further for maximal compression. For photos or complex color gradients where PNG8 isn't ideal, convert to JPG or WebP instead.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. GIF Optimization & WebP Upgrade */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+            {/* Visual Illustration */}
+            <div className="bg-slate-100 dark:bg-[#1f242d] rounded-2xl p-5 flex items-center justify-center border border-slate-200/80 dark:border-slate-800/80 min-h-[160px] sm:min-h-[190px]">
+              <svg viewBox="0 0 250 130" fill="none" stroke="currentColor" className="w-full max-w-[220px] h-auto text-slate-800 dark:text-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <g transform="translate(15, 12)">
+                  <rect x="0" y="0" width="215" height="66" rx="10" strokeWidth="2" />
+                  <rect x="8" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="32" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="56" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="80" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="104" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="128" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="152" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="176" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+                  <rect x="200" y="5" width="8" height="6" rx="2" fill="currentColor" className="text-slate-300 dark:text-slate-700" stroke="none" />
+
+                  <g transform="translate(14, 18)">
+                    <rect x="0" y="0" width="54" height="40" rx="6" strokeWidth="1.5" />
+                    <circle cx="27" cy="20" r="10" strokeWidth="1.5" />
+                    <polygon points="24,15 32,20 24,25" fill="currentColor" className="text-purple-600 dark:text-purple-400" stroke="none" />
+                    <rect x="66" y="0" width="54" height="40" rx="6" strokeWidth="1.5" />
+                    <circle cx="93" cy="20" r="10" strokeWidth="1.5" />
+                    <polygon points="90,15 98,20 90,25" fill="currentColor" className="text-purple-600 dark:text-purple-400" stroke="none" />
+                    <rect x="132" y="0" width="54" height="40" rx="6" strokeWidth="1.5" />
+                    <circle cx="159" cy="20" r="10" strokeWidth="1.5" />
+                    <polygon points="156,15 164,20 156,25" fill="currentColor" className="text-purple-600 dark:text-purple-400" stroke="none" />
+                  </g>
+                </g>
+                <g transform="translate(15, 92)">
+                  <rect x="0" y="0" width="215" height="26" rx="8" fill="currentColor" className="text-purple-50 dark:text-purple-950/60" stroke="none" />
+                  <text x="107" y="17" textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="bold" stroke="none" className="text-purple-700 dark:text-purple-400">
+                    GIF to Animated WebP: up to 80% Smaller
+                  </text>
+                </g>
+              </svg>
+            </div>
+
+            {/* Explanation & Controls */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                GIF Optimization &amp; WebP Upgrade
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Animated GIFs are streamlined by reducing the color palette from <strong className="text-slate-900 dark:text-white font-semibold">2 to 256 colors</strong> while safeguarding every animation frame and timing sequence.
+              </p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Cutting palette size produces huge reductions for graphic animations and memes. For modern sites, converting <strong className="text-slate-900 dark:text-white font-semibold">GIF to animated WebP</strong> provides superior compression and faster page loads.
+              </p>
             </div>
           </div>
         </div>

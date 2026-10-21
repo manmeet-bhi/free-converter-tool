@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActiveTab } from '../types';
-import { 
-  Layers, 
-  FileImage, 
-  Minimize2, 
-  Scaling, 
-  Sun, 
-  Moon, 
-  Menu, 
-  X,
-  Sparkles
+import {
+  Layers,
+  FileImage,
+  Minimize2,
+  Scaling,
+  Sun,
+  Moon,
+  Menu,
+  X
 } from 'lucide-react';
 import { ExifIcon } from './icons/ExifIcon';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -26,14 +27,15 @@ export const Header: React.FC<HeaderProps> = ({
   isDark,
   toggleTheme,
 }) => {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Layers className="w-5 h-5" /> },
-    { id: 'converter', label: 'Converter', icon: <FileImage className="w-5 h-5" /> },
-    { id: 'compressor', label: 'Compressor', icon: <Minimize2 className="w-5 h-5" /> },
-    { id: 'resizer', label: 'Resizer', icon: <Scaling className="w-5 h-5" /> },
-    { id: 'exif-remover', label: 'EXIF Remover', icon: <ExifIcon className="w-5 h-5" /> },
+    { id: 'home', label: t('nav.home', 'Home'), icon: <Layers className="w-5 h-5" /> },
+    { id: 'converter', label: t('nav.converter', 'Converter'), icon: <FileImage className="w-5 h-5" /> },
+    { id: 'compressor', label: t('nav.compressor', 'Compressor'), icon: <Minimize2 className="w-5 h-5" /> },
+    { id: 'resizer', label: t('nav.resizer', 'Resizer'), icon: <Scaling className="w-5 h-5" /> },
+    { id: 'exif-remover', label: t('nav.exif', 'EXIF'), icon: <ExifIcon className="w-5 h-5" /> },
   ];
 
   const handleNavClick = (tab: ActiveTab) => {
@@ -49,19 +51,21 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <button
             onClick={() => handleNavClick('home')}
-            className="flex items-center space-x-3 group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl p-1"
+            className="flex items-center space-x-3 group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl py-1 px-1.5"
+            aria-label="imagetooltip Home"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-200 dark:to-indigo-300 bg-clip-text text-transparent block leading-tight">
-                ImageKit
-              </span>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Free Converter & Compressor
-              </p>
-            </div>
+            {/* Light Mode Logo (Blue & Black) */}
+            <img
+              src="/logo-default.svg"
+              alt="imagetooltip logo"
+              className="h-8 sm:h-9 w-auto dark:hidden transition-transform duration-200 group-hover:scale-105"
+            />
+            {/* Dark Mode Logo (White version for high contrast) */}
+            <img
+              src="/logo-white.svg"
+              alt="imagetooltip logo"
+              className="h-8 sm:h-9 w-auto hidden dark:block transition-transform duration-200 group-hover:scale-105"
+            />
           </button>
 
           {/* Desktop Navigation */}
@@ -72,11 +76,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                    isActive
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
+                  className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${isActive
+                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
                 >
                   {item.icon}
                   <span>{item.label}</span>
@@ -85,8 +88,10 @@ export const Header: React.FC<HeaderProps> = ({
             })}
           </nav>
 
-          {/* Right Action: Theme Toggle */}
+          {/* Right Action: Language Switcher & Theme Toggle */}
           <div className="flex items-center space-x-2">
+            <LanguageSwitcher />
+
             <button
               onClick={toggleTheme}
               aria-label="Toggle dark mode"
@@ -116,11 +121,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 font-bold'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold transition-colors ${isActive
+                  ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 font-bold'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
               >
                 {item.icon}
                 <span>{item.label}</span>

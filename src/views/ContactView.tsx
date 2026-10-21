@@ -115,7 +115,7 @@ export const ContactView: React.FC = () => {
                   Message Sent Successfully!
                 </h3>
                 <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Thank you for reaching out to Free Converter Tool. Our team will review your message and respond to <strong>{formData.email}</strong> shortly.
+                  Thank you for reaching out to imagetooltip. Our team will review your message and respond to <strong>{formData.email}</strong> shortly.
                 </p>
                 <div className="pt-4">
                   <button

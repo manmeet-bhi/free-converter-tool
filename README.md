@@ -1,6 +1,6 @@
-# ImageKit – In-Browser Image Converter & Compressor
+# imagetooltip – In-Browser Image Converter & Compressor
 
-ImageKit is a fast, 100% private, client-side web utility for converting, compressing, and resizing images directly in your browser. All image transformations, decoding, and encoding run locally using standard HTML5 Canvas, `createImageBitmap`, binary ArrayBuffers, and custom TypeScript encoders with **zero server uploads**.
+imagetooltip is a fast, 100% private, client-side web utility for converting, compressing, and resizing images directly in your browser. All image transformations, decoding, and encoding run locally using standard HTML5 Canvas, `createImageBitmap`, binary ArrayBuffers, and custom TypeScript encoders with **zero server uploads**.
 
 ---
 

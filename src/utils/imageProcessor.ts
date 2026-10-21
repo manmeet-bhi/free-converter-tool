@@ -404,7 +404,10 @@ export async function processImage(
   }
 
   if (options.targetSizeBytes && (options.format === 'jpeg' || options.format === 'webp' || options.format === 'avif')) {
-    blob = await optimizeForTargetSize(canvas, options.format, options.targetSizeBytes, blob, options.originalSizeBytes);
+    const optRes = await optimizeForTargetSize(canvas, options.format, options.targetSizeBytes, blob, options.originalSizeBytes);
+    blob = optRes.blob;
+    targetWidth = optRes.width;
+    targetHeight = optRes.height;
   }
 
   const previewUrl = URL.createObjectURL(blob);
@@ -425,11 +428,13 @@ async function optimizeForTargetSize(
   targetSizeBytes: number,
   initialBlob: Blob,
   originalSizeBytes?: number
-): Promise<Blob> {
+): Promise<{ blob: Blob; width: number; height: number }> {
   const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'avif' ? 'image/avif' : 'image/webp';
+  let curW = canvas.width;
+  let curH = canvas.height;
 
   if (initialBlob.size <= targetSizeBytes) {
-    return initialBlob;
+    return { blob: initialBlob, width: curW, height: curH };
   }
 
   let minQ = 0.05;
@@ -464,7 +469,42 @@ async function optimizeForTargetSize(
     }
   }
 
-  return bestBlob;
+  // If lowest quality was still too large for the target size budget, gently downscale dimensions
+  if (bestBlob.size > targetSizeBytes) {
+    let currentCanvas = canvas;
+    for (let s = 0; s < 4 && bestBlob.size > targetSizeBytes; s++) {
+      const scale = Math.min(0.88, Math.sqrt(targetSizeBytes / bestBlob.size) * 0.95);
+      const newW = Math.max(16, Math.round(currentCanvas.width * scale));
+      const newH = Math.max(16, Math.round(currentCanvas.height * scale));
+      const scaledCanvas = document.createElement('canvas');
+      scaledCanvas.width = newW;
+      scaledCanvas.height = newH;
+      const sCtx = scaledCanvas.getContext('2d');
+      if (!sCtx) break;
+      sCtx.imageSmoothingEnabled = true;
+      sCtx.imageSmoothingQuality = 'high';
+      sCtx.drawImage(currentCanvas, 0, 0, newW, newH);
+      currentCanvas = scaledCanvas;
+      curW = newW;
+      curH = newH;
+
+      try {
+        let testBlob: Blob;
+        if (format === 'avif') {
+          testBlob = await encodeCanvasToAvif(currentCanvas, 0.6);
+        } else {
+          testBlob = await canvasToBlob(currentCanvas, mimeType, 0.6);
+        }
+        if (testBlob.size <= targetSizeBytes || testBlob.size < bestBlob.size) {
+          bestBlob = testBlob;
+        }
+      } catch {
+        break;
+      }
+    }
+  }
+
+  return { blob: bestBlob, width: curW, height: curH };
 }
 
 export function formatBytes(bytes: number, decimals = 1): string {

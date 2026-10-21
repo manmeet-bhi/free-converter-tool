@@ -12,7 +12,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
       {/* Page Title */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          About ImageKit
+          About
         </h1>
         <p className="text-base text-slate-500 dark:text-slate-400">
           The story behind a free, independent image utility for everyone.
@@ -21,7 +21,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
 
       {/* Main Content Card */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-sm space-y-8 text-slate-700 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
-        
+
         {/* Story Section */}
         <section className="space-y-4">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
@@ -34,7 +34,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
             Worst of all, most services require uploading your personal images to a remote cloud server. Whether it is personal family photos, business assets, or sensitive documents, there was never a good reason to hand those files over to unknown servers just to change their format or dimensions.
           </p>
           <p>
-            ImageKit was built independently to change that. Modern web browsers are powerful enough to handle image compression and conversion directly on your own device. Every image you drop here stays right inside your browser window. Nothing is uploaded, nothing is stored, and no one else ever sees your work.
+            imagetooltip was built independently to change that. Modern web browsers are powerful enough to handle image compression and conversion directly on your own device. Every image you drop here stays right inside your browser window. Nothing is uploaded, nothing is stored, and no one else ever sees your work.
           </p>
         </section>
 
@@ -50,7 +50,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
             Domain renewals, hosting infrastructure, SSL security, bandwidth, and regular maintenance all carry real recurring costs. Instead of hiding features behind a paywall, charging monthly subscriptions, or selling your personal data to third parties, we use non-intrusive advertisements to fund the platform.
           </p>
           <p>
-            Ad revenue allows ImageKit to remain 100% free, unlimited, and accessible to students, creators, developers, and small businesses worldwide without requiring a credit card or login.
+            Ad revenue allows imagetooltip to remain 100% free, unlimited, and accessible to students, creators, developers, and small businesses worldwide without requiring a credit card or login.
           </p>
         </section>
 
@@ -85,4 +85,3 @@ export const AboutView: React.FC<AboutViewProps> = ({ setActiveTab }) => {
     </div>
   );
 };
-

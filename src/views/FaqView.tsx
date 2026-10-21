@@ -8,9 +8,9 @@ interface FaqItem {
 
 const FAQS: FaqItem[] = [
   {
-    question: 'How does ImageKit process images without uploading to a server?',
+    question: 'How does imagetooltip process images without uploading to a server?',
     answer:
-      'Modern web browsers are equipped with powerful native graphic rendering and memory APIs, including HTML5 Canvas, CanvasRenderingContext2D, createImageBitmap(), and Web Workers. ImageKit uses these capabilities to decode, transform, compress, and re-encode pixel buffers locally inside your browser window. No network upload is ever performed.',
+      'Modern web browsers are equipped with powerful native graphic rendering and memory APIs, including HTML5 Canvas, CanvasRenderingContext2D, createImageBitmap(), and Web Workers. imagetooltip uses these capabilities to decode, transform, compress, and re-encode pixel buffers locally inside your browser window. No network upload is ever performed.',
   },
   {
     question: 'What is the difference between lossy and lossless image compression?',
@@ -20,12 +20,12 @@ const FAQS: FaqItem[] = [
   {
     question: 'Why does converting a transparent PNG to JPEG result in a background color?',
     answer:
-      'The JPEG standard does not support an alpha (transparency) channel. When converting an image with transparent areas to JPEG, those empty pixels must be filled with a solid background color. ImageKit allows you to configure this fill color (defaulting to clean white #FFFFFF or custom hex color) before conversion.',
+      'The JPEG standard does not support an alpha (transparency) channel. When converting an image with transparent areas to JPEG, those empty pixels must be filled with a solid background color. imagetooltip allows you to configure this fill color (defaulting to clean white #FFFFFF or custom hex color) before conversion.',
   },
   {
     question: 'How does the Target File Size mode work in the Compressor?',
     answer:
-      'When you request a target size (such as 250 KB), ImageKit runs an automated binary search algorithm across canvas quality and dimension parameters. It repeatedly computes the compressed byte size until it finds the optimal quality setting that meets your specified ceiling without unnecessarily degrading visual quality.',
+      'When you request a target size (such as 250 KB), imagetooltip runs an automated binary search algorithm across canvas quality and dimension parameters. It repeatedly computes the compressed byte size until it finds the optimal quality setting that meets your specified ceiling without unnecessarily degrading visual quality.',
   },
   {
     question: 'Can I convert animated GIF files?',
@@ -35,12 +35,12 @@ const FAQS: FaqItem[] = [
   {
     question: 'Is there a limit on how many images I can process at once?',
     answer:
-      'You can add up to 20 images per batch. To process more, add another batch. All processing happens in your browser, so large images may still use significant memory. ImageKit processes images sequentially to help prevent browser tab crashes.',
+      'You can add up to 20 images per batch. To process more, add another batch. All processing happens in your browser, so large images may still use significant memory. imagetooltip processes images sequentially to help prevent browser tab crashes.',
   },
   {
     question: 'Can I convert images to website Favicons (.ICO)?',
     answer:
-      'Yes! ImageKit includes a dedicated client-side ICO encoder that packages your images into valid Microsoft Icon (.ico) container files with 32-bit transparency, ready to be dropped into website root folders as favicon.ico.',
+      'Yes! imagetooltip includes a dedicated client-side ICO encoder that packages your images into valid Microsoft Icon (.ico) container files with 32-bit transparency, ready to be dropped into website root folders as favicon.ico.',
   },
 ];
 

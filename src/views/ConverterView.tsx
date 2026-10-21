@@ -1,33 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ImageItem } from '../types';
 import { DropZone } from '../components/DropZone';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
 import { ConversionProgressBar } from '../components/ConversionProgressBar';
-import { 
-  getAvailableOutputFormats, 
-  ImageFormat, 
-  detectInputFormat 
+import {
+  getAvailableOutputFormats,
+  ImageFormat,
+  detectInputFormat
 } from '../utils/formatSupport';
-import { 
-  processImage, 
-  formatBytes, 
-  calculateSavings, 
-  revokeUrl 
+import {
+  processImage,
+  formatBytes,
+  calculateSavings,
+  revokeUrl
 } from '../utils/imageProcessor';
 import { createZipArchive, downloadBlob } from '../utils/zipExporter';
-import { 
-  FileImage, 
-  Download, 
-  Trash2, 
-  RefreshCw, 
-  AlertTriangle, 
-  Archive, 
-  Check, 
-  Sliders, 
-  Eye, 
+import {
+  FileImage,
+  Download,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Archive,
+  Check,
+  Sliders,
+  Eye,
   Edit2,
   Plus,
-  Crop
+  Crop,
+  ChevronDown
 } from 'lucide-react';
 import { ImageEditorModal } from '../components/ImageEditorModal';
 import confetti from 'canvas-confetti';
@@ -35,8 +36,9 @@ import confetti from 'canvas-confetti';
 interface ConverterViewProps {
   images: ImageItem[];
   setImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
-  onFilesSelected: (files: File[]) => void;
+  onFilesSelected: (files: File[], overrideTargetFormat?: ImageFormat) => void;
   defaultFormat?: ImageFormat;
+  allowedFormats?: ImageFormat[];
   hideHeader?: boolean;
 }
 
@@ -45,18 +47,68 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   setImages,
   onFilesSelected,
   defaultFormat = 'webp',
+  allowedFormats,
   hideHeader = false,
 }) => {
-  const availableFormats = getAvailableOutputFormats();
+  const allFormats = getAvailableOutputFormats();
+  const availableFormats = useMemo(() => {
+    if (allowedFormats && allowedFormats.length > 0) {
+      return allFormats.filter((f) => allowedFormats.includes(f.id));
+    }
+    return allFormats;
+  }, [allFormats, allowedFormats]);
   const [batchTargetFormat, setBatchTargetFormat] = useState<ImageFormat>(defaultFormat);
+  const [isBatchFormatOpen, setIsBatchFormatOpen] = useState<boolean>(false);
+  const batchFormatDropdownRef = useRef<HTMLDivElement>(null);
   const addMoreInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (defaultFormat) {
       setBatchTargetFormat(defaultFormat);
+      setImages((prev) =>
+        prev.map((item) => {
+          if (item.status === 'idle') {
+            const currentName = item.customFilename;
+            const lastDot = currentName.lastIndexOf('.');
+            const base = lastDot !== -1 ? currentName.slice(0, lastDot) : currentName;
+            const targetExt = defaultFormat === 'jpeg' ? '.jpg' : `.${defaultFormat}`;
+            return {
+              ...item,
+              targetFormat: defaultFormat,
+              customFilename: `${base}${targetExt}`,
+            };
+          }
+          return item;
+        })
+      );
     }
-  }, [defaultFormat]);
+  }, [defaultFormat, setImages]);
+
+  // Close format dropdown on outside click or escape
+  useEffect(() => {
+    if (!isBatchFormatOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (batchFormatDropdownRef.current && !batchFormatDropdownRef.current.contains(e.target as Node)) {
+        setIsBatchFormatOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsBatchFormatOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isBatchFormatOpen]);
   const [batchQuality, setBatchQuality] = useState<number>(0.85);
+
+  // Target file size for all images (Batch option)
+  const [useBatchTargetSize, setUseBatchTargetSize] = useState<boolean>(false);
+  const [batchTargetSizeInput, setBatchTargetSizeInput] = useState<string>('');
+  const [batchTargetSizeUnit, setBatchTargetSizeUnit] = useState<'KB' | 'MB'>('KB');
+
   const [isProcessingAll, setIsProcessingAll] = useState<boolean>(false);
   const [convertingFileName, setConvertingFileName] = useState<string>('');
   const [isZipping, setIsZipping] = useState<boolean>(false);
@@ -101,6 +153,127 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
     );
   };
 
+  // Compute batch target size in bytes
+  const batchTargetSizeBytes = useBatchTargetSize && parseFloat(batchTargetSizeInput) > 0
+    ? (batchTargetSizeUnit === 'MB' ? parseFloat(batchTargetSizeInput) * 1024 * 1024 : parseFloat(batchTargetSizeInput) * 1024)
+    : undefined;
+
+  const handleToggleBatchTargetSize = (enabled: boolean) => {
+    setUseBatchTargetSize(enabled);
+    if (enabled) {
+      const num = parseFloat(batchTargetSizeInput);
+      const bytes = !isNaN(num) && num > 0
+        ? (batchTargetSizeUnit === 'MB' ? num * 1024 * 1024 : num * 1024)
+        : undefined;
+      setImages((prev) =>
+        prev.map((item) => {
+          if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
+          return {
+            ...item,
+            targetSizeBytes: bytes,
+            status: 'idle',
+            result: undefined,
+          };
+        })
+      );
+    } else {
+      setImages((prev) =>
+        prev.map((item) => ({
+          ...item,
+          targetSizeBytes: undefined,
+        }))
+      );
+    }
+  };
+
+  const handleApplyBatchTargetSizeToAll = () => {
+    const num = parseFloat(batchTargetSizeInput);
+    if (isNaN(num) || num <= 0) return;
+    const bytes = batchTargetSizeUnit === 'MB' ? num * 1024 * 1024 : num * 1024;
+    setUseBatchTargetSize(true);
+    setImages((prev) =>
+      prev.map((item) => {
+        if (item.result?.previewUrl) revokeUrl(item.result.previewUrl);
+        return {
+          ...item,
+          targetSizeBytes: bytes,
+          status: 'idle',
+          result: undefined,
+        };
+      })
+    );
+  };
+
+  const getIndividualTargetDisplayValue = (item: ImageItem): string => {
+    if (item.targetSizeBytes === undefined) return '';
+    if (item.targetSizeBytes >= 1024 * 1024 && item.targetSizeBytes % (1024 * 1024) === 0) {
+      return (item.targetSizeBytes / (1024 * 1024)).toString();
+    }
+    return Math.round(item.targetSizeBytes / 1024).toString();
+  };
+
+  const getIndividualTargetUnit = (item: ImageItem): 'KB' | 'MB' => {
+    if (item.targetSizeBytes !== undefined && item.targetSizeBytes >= 1024 * 1024 && item.targetSizeBytes % (1024 * 1024) === 0) {
+      return 'MB';
+    }
+    return 'KB';
+  };
+
+  const handleIndividualTargetSizeChange = (id: string, val: string, unit: 'KB' | 'MB') => {
+    const num = parseFloat(val);
+    const bytes = !isNaN(num) && num > 0
+      ? (unit === 'MB' ? num * 1024 * 1024 : num * 1024)
+      : undefined;
+
+    setImages((prev) =>
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        if (i.result?.previewUrl) revokeUrl(i.result.previewUrl);
+        return {
+          ...i,
+          targetSizeBytes: bytes,
+          status: 'idle',
+          result: undefined,
+        };
+      })
+    );
+  };
+
+  const handleIndividualTargetUnitChange = (id: string, newUnit: 'KB' | 'MB', currentVal: string) => {
+    const num = parseFloat(currentVal);
+    const bytes = !isNaN(num) && num > 0
+      ? (newUnit === 'MB' ? num * 1024 * 1024 : num * 1024)
+      : undefined;
+
+    setImages((prev) =>
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        if (i.result?.previewUrl) revokeUrl(i.result.previewUrl);
+        return {
+          ...i,
+          targetSizeBytes: bytes,
+          status: 'idle',
+          result: undefined,
+        };
+      })
+    );
+  };
+
+  const handleClearIndividualTargetSize = (id: string) => {
+    setImages((prev) =>
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        if (i.result?.previewUrl) revokeUrl(i.result.previewUrl);
+        return {
+          ...i,
+          targetSizeBytes: undefined,
+          status: 'idle',
+          result: undefined,
+        };
+      })
+    );
+  };
+
   // Convert a single image
   const convertSingleImage = async (id: string) => {
     const item = images.find((i) => i.id === id);
@@ -116,12 +289,17 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         revokeUrl(item.result.previewUrl);
       }
 
+      const targetBytes = item.targetSizeBytes !== undefined
+        ? item.targetSizeBytes
+        : (useBatchTargetSize && batchTargetSizeBytes ? batchTargetSizeBytes : undefined);
+
       const result = await processImage(item.originalInfo, {
         format: item.targetFormat,
         quality: item.targetQuality,
         width: item.targetWidth,
         height: item.targetHeight,
         backgroundColor: item.backgroundColor,
+        targetSizeBytes: targetBytes,
         originalSizeBytes: item.originalSize,
       });
 
@@ -164,7 +342,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
     }));
 
     try {
-      await createZipArchive(filesToZip, `imagekit-converted-${Date.now()}.zip`, (pct) => {
+      await createZipArchive(filesToZip, `imagetooltip-converted-${Date.now()}.zip`, (pct) => {
         setZipProgress(pct);
       });
     } catch {
@@ -194,7 +372,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
   const completedCount = images.filter((i) => i.status === 'done').length;
 
   return (
-    <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-6 sm:space-y-8 py-4 sm:py-6 max-w-6xl mx-auto px-3 sm:px-4">
       {/* Hidden file input for Adding More Images when images are in queue */}
       <input
         ref={addMoreInputRef}
@@ -203,7 +381,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
         accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.svg,.ico"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
-            onFilesSelected(Array.from(e.target.files));
+            onFilesSelected(Array.from(e.target.files), batchTargetFormat);
             e.target.value = '';
           }
         }}
@@ -291,7 +469,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
       {images.length === 0 && (
         <div className="pt-4 max-w-2xl mx-auto w-full">
           <DropZone
-            onFilesSelected={onFilesSelected}
+            onFilesSelected={(files) => onFilesSelected(files, batchTargetFormat)}
             title="Drop images here to start"
             subtitle="JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO"
           />
@@ -310,7 +488,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
 
       {/* Batch Control Toolbar */}
       {images.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center space-x-2">
@@ -318,40 +496,92 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                 <span>{images.length > 1 ? 'Convert All To:' : 'Convert To:'}</span>
               </span>
 
-              {/* Format selection chips */}
-              <div className="flex flex-wrap gap-2">
-                {availableFormats.map((fmt) => {
-                  const isSelected = batchTargetFormat === fmt.id;
-                  const isAvailable = fmt.canEncode;
+              {/* Format selection dropdown as per design and theme */}
+              <div className="relative inline-block text-left" ref={batchFormatDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsBatchFormatOpen((prev) => !prev)}
+                  aria-expanded={isBatchFormatOpen}
+                  aria-haspopup="listbox"
+                  className="inline-flex items-center space-x-2.5 px-3.5 py-2 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 transition-colors shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+                  title="Choose output format for all images"
+                >
+                  <span className="px-2 py-0.5 rounded-md text-xs font-extrabold uppercase bg-blue-600 text-white tracking-wider">
+                    {batchTargetFormat}
+                  </span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    {availableFormats.find((f) => f.id === batchTargetFormat)?.label || batchTargetFormat.toUpperCase()}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isBatchFormatOpen ? 'rotate-180 text-blue-500' : ''
+                      }`}
+                  />
+                </button>
 
-                  return (
-                    <div key={fmt.id} className="relative group">
-                      <button
-                        type="button"
-                        disabled={!isAvailable}
-                        onClick={() => handleApplyBatchFormat(fmt.id)}
-                        className={`px-3.5 py-2 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-150 ${
-                          !isAvailable
-                            ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400'
-                            : isSelected
-                            ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/30'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                        title={fmt.description}
-                      >
-                        {fmt.id}
-                        {!isAvailable && ' (No export)'}
-                      </button>
-
-                      {!isAvailable && (
-                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl border border-slate-700 leading-normal pointer-events-none">
-                          <p className="font-semibold text-amber-300 mb-0.5">Encoding Unavailable</p>
-                          <p>{fmt.unsupportedMessage || `${fmt.label} canvas encoding is not supported in this browser version.`}</p>
-                        </div>
-                      )}
+                {isBatchFormatOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute left-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                  >
+                    <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800/80 mb-1 flex items-center justify-between">
+                      <span>Available Output Formats</span>
+                      <span className="text-[10px] text-slate-400 font-normal">All images</span>
                     </div>
-                  );
-                })}
+                    <div className="max-h-72 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
+                      {availableFormats.map((fmt) => {
+                        const isSelected = batchTargetFormat === fmt.id;
+                        const isAvailable = fmt.canEncode;
+
+                        return (
+                          <button
+                            key={fmt.id}
+                            type="button"
+                            disabled={!isAvailable}
+                            onClick={() => {
+                              if (isAvailable) {
+                                handleApplyBatchFormat(fmt.id);
+                                setIsBatchFormatOpen(false);
+                              }
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${!isAvailable
+                                ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-500'
+                                : isSelected
+                                  ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 font-bold'
+                                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70'
+                              }`}
+                          >
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <span
+                                className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold uppercase shrink-0 ${isSelected
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                  }`}
+                              >
+                                {fmt.id}
+                              </span>
+                              <div className="flex flex-col min-w-0 text-left">
+                                <span className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                                  {fmt.label}
+                                </span>
+                                <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate leading-tight mt-0.5">
+                                  {fmt.description}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 ml-2">
+                              {isSelected ? (
+                                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              ) : !isAvailable ? (
+                                <span className="text-[10px] text-amber-500 font-medium">No export</span>
+                              ) : null}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -387,9 +617,9 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
             </div>
           </div>
 
-          {/* Quality slider for lossy batch formats & optimized PNG */}
+          {/* Quality slider and Batch Target File Size (All Images) */}
           {(batchTargetFormat === 'jpeg' || batchTargetFormat === 'webp' || batchTargetFormat === 'avif' || batchTargetFormat === 'png') && (
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
               <div className="flex items-center space-x-3">
                 <span className="font-bold text-slate-700 dark:text-slate-300">
                   Target Quality:
@@ -411,6 +641,77 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   {Math.round(batchQuality * 100)}%
                 </span>
               </div>
+
+              {/* Batch Target File Size option for all images */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <label className="flex items-center space-x-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={useBatchTargetSize}
+                    onChange={(e) => handleToggleBatchTargetSize(e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span>Target Size (All Images):</span>
+                </label>
+
+                {useBatchTargetSize && (
+                  <div className="flex flex-wrap items-center gap-1.5 animate-fade-in">
+                    <input
+                      type="number"
+                      min="5"
+                      max="50000"
+                      value={batchTargetSizeInput}
+                      onChange={(e) => {
+                        setBatchTargetSizeInput(e.target.value);
+                        const num = parseFloat(e.target.value);
+                        if (!isNaN(num) && num > 0) {
+                          const bytes = batchTargetSizeUnit === 'MB' ? num * 1024 * 1024 : num * 1024;
+                          setImages((prev) =>
+                            prev.map((item) => ({
+                              ...item,
+                              targetSizeBytes: bytes,
+                              status: item.status === 'done' ? 'idle' : item.status,
+                            }))
+                          );
+                        }
+                      }}
+                      placeholder="e.g. 250"
+                      className="w-20 text-xs sm:text-sm font-mono font-bold px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <select
+                      value={batchTargetSizeUnit}
+                      onChange={(e) => {
+                        const newUnit = e.target.value as 'KB' | 'MB';
+                        setBatchTargetSizeUnit(newUnit);
+                        const num = parseFloat(batchTargetSizeInput);
+                        if (!isNaN(num) && num > 0) {
+                          const bytes = newUnit === 'MB' ? num * 1024 * 1024 : num * 1024;
+                          setImages((prev) =>
+                            prev.map((item) => ({
+                              ...item,
+                              targetSizeBytes: bytes,
+                              status: item.status === 'done' ? 'idle' : item.status,
+                            }))
+                          );
+                        }
+                      }}
+                      className="text-xs sm:text-sm font-bold px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+                    >
+                      <option value="KB">KB</option>
+                      <option value="MB">MB</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyBatchTargetSizeToAll}
+                      className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-900 transition-colors"
+                      title="Apply this target size to all images in queue"
+                    >
+                      Apply to All
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -425,21 +726,23 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
           const inputFormat = detectInputFormat(item.file);
           const hasTransparencyWarning =
             item.originalInfo.hasTransparency && (item.targetFormat === 'jpeg' || item.targetFormat === 'bmp');
+          const effectiveTargetBytes = item.targetSizeBytes !== undefined
+            ? item.targetSizeBytes
+            : (useBatchTargetSize && batchTargetSizeBytes ? batchTargetSizeBytes : undefined);
 
           return (
             <div
               key={item.id}
-              className={`bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border transition-all duration-150 ${
-                item.status === 'done'
-                  ? 'border-emerald-300 dark:border-emerald-900/60 shadow-xs'
-                  : item.status === 'error'
+              className={`bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border transition-all duration-150 ${item.status === 'done'
+                ? 'border-emerald-300 dark:border-emerald-900/60 shadow-xs'
+                : item.status === 'error'
                   ? 'border-rose-300 dark:border-rose-900/60'
                   : 'border-slate-200 dark:border-slate-800'
-              }`}
+                }`}
             >
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
                 {/* Left: Thumbnail & Filename info */}
-                <div className="flex items-start sm:items-center space-x-4 min-w-0 flex-1">
+                <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1 w-full">
                   {/* Thumbnail preview */}
                   <div
                     onClick={() =>
@@ -456,7 +759,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                           : undefined,
                       })
                     }
-                    className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 cursor-pointer group bg-checkerboard-light dark:bg-checkerboard-dark flex items-center justify-center shadow-xs"
+                    className="relative w-14 h-14 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 cursor-pointer group bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center shadow-xs"
                     title="Click to view full image"
                   >
                     <img
@@ -470,8 +773,8 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                   </div>
 
                   {/* Name and details */}
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center space-x-2">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center space-x-1.5 sm:space-x-2">
                       <input
                         type="text"
                         value={item.customFilename}
@@ -481,33 +784,28 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                             prev.map((i) => (i.id === item.id ? { ...i, customFilename: newName } : i))
                           );
                         }}
-                        className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 px-1.5 py-1 rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none truncate max-w-xs sm:max-w-md"
+                        className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 px-1.5 py-1 rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none truncate w-full max-w-[180px] xs:max-w-xs sm:max-w-md"
                         title="Click to rename output file"
                       />
-                      <Edit2 className="w-4 h-4 text-slate-400 shrink-0" />
+                      <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 shrink-0" />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
                       <span>{item.originalDimensions.width} × {item.originalDimensions.height} px</span>
                       <span>•</span>
                       <span>Original: <strong className="text-slate-700 dark:text-slate-200">{formatBytes(item.originalSize)}</strong></span>
-                      <span className="uppercase font-sans font-bold text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      <span className="uppercase font-sans font-bold text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         {inputFormat}
                       </span>
-                      {item.originalInfo.hasTransparency && (
-                        <span className="font-sans text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-900">
-                          Alpha Transparency
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Right: Target Format dropdown, status, and download buttons */}
-                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+                {/* Right: Target Format dropdown, Individual Target Size, status, and download buttons */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto justify-between lg:justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800/80">
                   {/* Target format select */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-300 font-bold">To:</span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-bold">To:</span>
                     <select
                       value={item.targetFormat}
                       onChange={(e) => {
@@ -520,17 +818,17 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                           prev.map((i) =>
                             i.id === item.id
                               ? {
-                                  ...i,
-                                  targetFormat: newFmt,
-                                  customFilename: `${base}${targetExt}`,
-                                  status: 'idle',
-                                  result: undefined,
-                                }
+                                ...i,
+                                targetFormat: newFmt,
+                                customFilename: `${base}${targetExt}`,
+                                status: 'idle',
+                                result: undefined,
+                              }
                               : i
                           )
                         );
                       }}
-                      className="text-sm font-bold uppercase rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      className="text-xs sm:text-sm font-bold uppercase rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 py-2 px-2.5 sm:px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     >
                       {availableFormats.map((f) => (
                         <option key={f.id} value={f.id} disabled={!f.canEncode}>
@@ -540,19 +838,67 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                     </select>
                   </div>
 
+                  {/* Individual Target File Size Input */}
+                  <div className="flex items-center space-x-1 bg-slate-50 dark:bg-slate-800/80 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs" title="Set output file size limit for this individual image">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                      Size:
+                    </span>
+                    <input
+                      type="number"
+                      min="5"
+                      max="50000"
+                      placeholder={useBatchTargetSize && batchTargetSizeInput ? `${batchTargetSizeInput}` : 'Auto'}
+                      value={getIndividualTargetDisplayValue(item)}
+                      onChange={(e) => handleIndividualTargetSizeChange(item.id, e.target.value, getIndividualTargetUnit(item))}
+                      className="w-16 sm:w-20 text-xs font-mono font-bold px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      title="Custom output file size for this image"
+                    />
+                    <select
+                      value={getIndividualTargetUnit(item)}
+                      onChange={(e) => handleIndividualTargetUnitChange(item.id, e.target.value as 'KB' | 'MB', getIndividualTargetDisplayValue(item))}
+                      className="text-xs font-bold px-1.5 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer"
+                    >
+                      <option value="KB">KB</option>
+                      <option value="MB">MB</option>
+                    </select>
+                    {item.targetSizeBytes !== undefined && (
+                      <button
+                        type="button"
+                        onClick={() => handleClearIndividualTargetSize(item.id)}
+                        className="text-xs text-slate-400 hover:text-rose-500 px-1 font-bold"
+                        title="Reset to batch / auto"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+
                   {/* Result Size / Savings */}
-                  {item.result && savings && (
+                  {item.result && (
                     <div className="text-right font-mono">
                       <div className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                         {formatBytes(item.result.fileSizeBytes)}
                       </div>
-                      <div
-                        className={`text-xs sm:text-sm font-bold ${
-                          savings.isSmaller ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
-                        }`}
-                      >
-                        {savings.isSmaller ? `-${savings.percent}% (${formatBytes(savings.bytesSaved)} saved)` : `+${savings.percent}%`}
-                      </div>
+                      {effectiveTargetBytes && (
+                        <div
+                          className={`text-[11px] font-bold ${item.result.fileSizeBytes <= effectiveTargetBytes
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-amber-600 dark:text-amber-400'
+                            }`}
+                        >
+                          {item.result.fileSizeBytes <= effectiveTargetBytes
+                            ? `✓ ≤ ${formatBytes(effectiveTargetBytes)}`
+                            : `Target: ${formatBytes(effectiveTargetBytes)}`}
+                        </div>
+                      )}
+                      {savings && (
+                        <div
+                          className={`text-xs sm:text-sm font-bold ${savings.isSmaller ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
+                            }`}
+                        >
+                          {savings.isSmaller ? `-${savings.percent}% (${formatBytes(savings.bytesSaved)} saved)` : `+${savings.percent}%`}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -610,7 +956,7 @@ export const ConverterView: React.FC<ConverterViewProps> = ({
                     </span>
                     <span className="animate-pulse">Active</span>
                   </div>
-                  <div 
+                  <div
                     className="w-full bg-slate-200 dark:bg-slate-800 rounded-md h-3.5 p-0.5 overflow-hidden shadow-inner border border-slate-300 dark:border-slate-700"
                     role="progressbar"
                     aria-label={`Converting ${item.customFilename}`}

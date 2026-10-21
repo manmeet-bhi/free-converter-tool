@@ -5,19 +5,11 @@ import { ConverterView } from './ConverterView';
 import { CompressorView } from './CompressorView';
 import { ResizerView } from './ResizerView';
 import { 
-  ShieldCheck, 
-  Sparkles, 
-  Zap, 
   HelpCircle, 
   CheckCircle2, 
   ArrowRight, 
   ChevronDown, 
-  ChevronUp, 
-  Download, 
-  Layers, 
-  FileCheck,
-  Lock,
-  Cpu
+  ChevronUp
 } from 'lucide-react';
 
 export interface ToolPageConfig {
@@ -25,6 +17,7 @@ export interface ToolPageConfig {
   toolType: 'converter' | 'compressor' | 'resizer';
   targetFormat?: ImageFormat;
   acceptedFormats?: string[];
+  allowedOutputFormats?: ImageFormat[];
   h1: string;
   badge: string;
   intro: string;
@@ -40,7 +33,7 @@ interface ToolLandingViewProps {
   config: ToolPageConfig;
   images: ImageItem[];
   setImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
-  onFilesSelected: (files: File[]) => void;
+  onFilesSelected: (files: File[], overrideTargetFormat?: ImageFormat) => void;
   setActiveTab: (tab: ActiveTab) => void;
 }
 
@@ -63,8 +56,26 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Derive allowed formats for conversion landing pages (e.g. for /png-to-webp, allow webp & png)
+  const allowedFormats: ImageFormat[] | undefined =
+    config.allowedOutputFormats ||
+    (config.targetFormat
+      ? Array.from(
+          new Set(
+            [
+              config.targetFormat,
+              config.sourceFormatName?.toLowerCase() === 'jpg'
+                ? 'jpeg'
+                : (config.sourceFormatName?.toLowerCase() as ImageFormat),
+            ].filter((f): f is ImageFormat =>
+              Boolean(f) && ['jpeg', 'png', 'webp', 'avif', 'bmp', 'ico', 'gif', 'svg'].includes(f)
+            )
+          )
+        )
+      : undefined);
+
   return (
-    <article className="space-y-12 py-8 max-w-6xl mx-auto px-4 sm:px-6">
+    <article className="space-y-8 sm:space-y-12 py-4 sm:py-8 max-w-6xl mx-auto px-3 sm:px-6">
       {/* Breadcrumb Navigation */}
       <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
         <button 
@@ -87,35 +98,10 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
       </nav>
 
       {/* Hero Header */}
-      <header className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-900/60 shadow-xs">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <span>{config.badge}</span>
-        </div>
-
+      <header className="text-center max-w-3xl mx-auto space-y-2">
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           {config.h1}
         </h1>
-
-        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-          {config.intro}
-        </p>
-
-        {/* Trust & Performance Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-sm">
-          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-            <span className="font-semibold">Local Device Processing</span>
-          </div>
-          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <Zap className="w-5 h-5 text-amber-500" />
-            <span className="font-semibold">Instant Local Processing</span>
-          </div>
-          <div className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <Lock className="w-5 h-5 text-blue-500" />
-            <span className="font-semibold">Zero Server Uploads</span>
-          </div>
-        </div>
       </header>
 
       {/* Embedded Active Tool Interface */}
@@ -124,8 +110,9 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
           <ConverterView
             images={images}
             setImages={setImages}
-            onFilesSelected={onFilesSelected}
+            onFilesSelected={(files, fmt) => onFilesSelected(files, fmt || config.targetFormat)}
             defaultFormat={config.targetFormat || 'webp'}
+            allowedFormats={allowedFormats}
             hideHeader={true}
           />
         )}
@@ -180,7 +167,7 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
       <section className="space-y-6 pt-4">
         <div className="text-center max-w-xl mx-auto space-y-1.5">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-            Why Choose ImageKit for Your Images?
+            Why Choose imagetooltip for Your Images?
           </h2>
           <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400">
             Built for developers, designers, and privacy-conscious users worldwide.

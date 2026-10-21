@@ -1,12 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActiveTab } from '../types';
-import { Sparkles } from 'lucide-react';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface FooterProps {
   setActiveTab: (tab: ActiveTab) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
+  const { t } = useTranslation();
   const handleNav = (tab: ActiveTab) => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -18,23 +20,31 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="md:col-span-2 lg:col-span-2 space-y-3">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-200 dark:to-indigo-300 bg-clip-text text-transparent">
-                ImageKit
-              </span>
-            </div>
+            <button
+              onClick={() => handleNav('home')}
+              className="flex items-center group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+              aria-label="imagetooltip Home"
+            >
+              <img
+                src="/logo-default.svg"
+                alt="imagetooltip logo"
+                className="h-8 sm:h-9 w-auto dark:hidden transition-transform duration-200 group-hover:scale-105"
+              />
+              <img
+                src="/logo-white.svg"
+                alt="imagetooltip logo"
+                className="h-8 sm:h-9 w-auto hidden dark:block transition-transform duration-200 group-hover:scale-105"
+              />
+            </button>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
-              Free, private in-browser image converter, compressor, resizer, and EXIF cleaner. High-speed client-side WebAssembly processing with zero server uploads and 100% privacy.
+              {t('footer.tagline', 'Free, private in-browser image converter, compressor, resizer, and EXIF cleaner. High-speed client-side WebAssembly processing with zero server uploads and 100% privacy.')}
             </p>
           </div>
 
           {/* Tools */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
-              Tools
+              {t('footer.tools', 'Tools')}
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -42,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('converter')}
                   className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
-                  Image Converter
+                  {t('nav.converter', 'Image Converter')}
                 </button>
               </li>
               <li>
@@ -50,7 +60,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('compressor')}
                   className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
-                  Image Compressor
+                  {t('nav.compressor', 'Image Compressor')}
                 </button>
               </li>
               <li>
@@ -58,7 +68,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('resizer')}
                   className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
-                  Image Resizer
+                  {t('nav.resizer', 'Image Resizer')}
                 </button>
               </li>
               <li>
@@ -66,7 +76,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('exif-remover')}
                   className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
                 >
-                  EXIF Remover
+                  {t('nav.exif', 'EXIF Remover')}
                 </button>
               </li>
             </ul>
@@ -138,33 +148,36 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 gap-3">
-          <p>© {new Date().getFullYear()} ImageKit.com</p>
+        <div className="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 gap-4">
+          <p>© {new Date().getFullYear()} imagetooltip.com</p>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-medium text-slate-500 dark:text-slate-400">
             <button
               onClick={() => handleNav('about')}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              About
+              {t('nav.about', 'About')}
             </button>
             <button
               onClick={() => handleNav('contact')}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              Contact
+              {t('nav.contact', 'Contact')}
             </button>
             <button
               onClick={() => handleNav('faq')}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              FAQ
+              {t('nav.faq', 'FAQ')}
             </button>
             <button
               onClick={() => handleNav('privacy')}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              Privacy Policy
+              {t('nav.privacy', 'Privacy Policy')}
             </button>
+          </div>
+          <div className="flex items-center shrink-0">
+            <LanguageSwitcher direction="up" />
           </div>
         </div>
       </div>

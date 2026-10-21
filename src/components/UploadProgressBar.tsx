@@ -9,7 +9,11 @@ export interface UploadStatus {
   currentFileName: string;
   currentFileSize?: number;
   progressPercent: number;
-  phase?: 'verifying' | 'decoding' | 'complete' | 'idle';
+  phase?: 'verifying' | 'decoding' | 'inspecting' | 'complete' | 'idle';
+  phaseDescription?: string;
+  title?: string;
+  actionLabel?: string;
+  themeColor?: 'blue' | 'rose';
   errorMessages?: string[];
   onDismissErrors?: () => void;
 }
@@ -26,6 +30,10 @@ export const UploadProgressBar: React.FC<UploadProgressBarProps> = ({ status }) 
     currentFileName,
     currentFileSize,
     progressPercent,
+    title = 'Adding Images',
+    actionLabel = 'added',
+    themeColor = 'blue',
+    phaseDescription,
     errorMessages,
     onDismissErrors,
   } = status;
@@ -33,6 +41,20 @@ export const UploadProgressBar: React.FC<UploadProgressBarProps> = ({ status }) 
   if (!isUploading && (!errorMessages || errorMessages.length === 0)) {
     return null;
   }
+
+  const isRose = themeColor === 'rose';
+  const iconContainerClass = isRose
+    ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60'
+    : 'bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/60';
+  const badgeClass = isRose
+    ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-900/60'
+    : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-900/60';
+  const percentTextClass = isRose
+    ? 'text-rose-600 dark:text-rose-400'
+    : 'text-blue-600 dark:text-blue-400';
+  const barFillClass = isRose
+    ? 'bg-rose-600 dark:bg-rose-500'
+    : 'bg-blue-600 dark:bg-blue-500';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-xs transition-all duration-200 animate-fade-in">
@@ -70,29 +92,34 @@ export const UploadProgressBar: React.FC<UploadProgressBarProps> = ({ status }) 
           <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md animate-fade-in space-y-4">
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <div className="flex items-center space-x-3 min-w-0">
-                {/* Clean Adding Image Icon */}
-                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs border border-blue-200 dark:border-blue-900/60">
+                {/* Adding Media Icon */}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs border ${iconContainerClass}`}>
                   <ImagePlus className="w-5 h-5" />
                 </div>
 
                 <div className="min-w-0">
                   <div className="flex items-center space-x-2.5">
                     <span className="font-bold text-slate-800 dark:text-slate-100 block truncate text-sm sm:text-base">
-                      Adding Images
+                      {title}
                     </span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60">
-                      {Math.min(totalFiles, completedFiles + 1)} / {totalFiles} added
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${badgeClass}`}>
+                      {Math.min(totalFiles, completedFiles + 1)} / {totalFiles} {actionLabel}
                     </span>
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400 truncate block mt-0.5">
                     <strong className="text-slate-700 dark:text-slate-200">{currentFileName}</strong>
                     {currentFileSize ? ` (${formatBytes(currentFileSize)})` : ''}
                   </span>
+                  {phaseDescription && (
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 block truncate mt-0.5">
+                      {phaseDescription}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center space-x-2 shrink-0 pl-3">
-                <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 text-base sm:text-lg">
+                <span className={`font-mono font-extrabold text-base sm:text-lg ${percentTextClass}`}>
                   {Math.min(100, Math.round(progressPercent))}%
                 </span>
               </div>
@@ -105,10 +132,10 @@ export const UploadProgressBar: React.FC<UploadProgressBarProps> = ({ status }) 
               aria-valuenow={Math.round(progressPercent)}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Image loading progress"
+              aria-label="Media loading progress"
             >
               <div
-                className="bg-blue-600 dark:bg-blue-500 h-full rounded-md transition-all duration-300 ease-out shadow-xs relative overflow-hidden"
+                className={`h-full rounded-md transition-all duration-300 ease-out shadow-xs relative overflow-hidden ${barFillClass}`}
                 style={{ width: `${Math.min(100, Math.max(4, progressPercent))}%` }}
               >
                 {/* Classical top gloss reflection */}

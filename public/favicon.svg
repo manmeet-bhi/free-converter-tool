@@ -1,12 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="url(#brand-grad)"/>
-  <path d="M9 16L13 20L23 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M16 7L18 10L21 11L18 13L16 16L14 13L11 11L14 10L16 7Z" fill="white" opacity="0.9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="brand-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2563EB"/>
-      <stop offset="0.5" stop-color="#4F46E5"/>
-      <stop offset="1" stop-color="#06B6D4"/>
+    <linearGradient id="fav-grad" gradientTransform="rotate(25)" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4E1A70"/>
+      <stop offset="100%" stop-color="#2B4CF2"/>
     </linearGradient>
+    <style>
+      .brand-mark {
+        fill: url(#fav-grad);
+      }
+      @media (prefers-color-scheme: dark) {
+        .brand-mark {
+          fill: #ffffff;
+        }
+      }
+    </style>
   </defs>
+  <path class="brand-mark" d="M9.382 8.675h13.943v13.943L32 31.293V0H.707zM22.618 23.325H8.675V9.382L0 .707V32h31.293z"/>
 </svg>

@@ -6,7 +6,7 @@
  * the active page state.
  */
 
-import { PageMetadata, SITE_NAME, SITE_URL, TWITTER_HANDLE } from '../config/seo';
+import { PageMetadata, SITE_NAME, SITE_URL, TWITTER_HANDLE, DEFAULT_AUTHOR } from '../config/seo';
 
 /**
  * Safely updates or creates a `<meta>` element by name or property attribute.
@@ -165,7 +165,7 @@ export function updatePageSEO(meta: PageMetadata, faqs?: { question: string; ans
     setMetaTag('name', 'keywords', meta.keywords.join(', '));
   }
   setMetaTag('name', 'robots', meta.isIndexable ? 'index, follow, max-image-preview:large' : 'noindex, nofollow');
-  setMetaTag('name', 'author', 'ImageKit Team');
+  setMetaTag('name', 'author', DEFAULT_AUTHOR);
 
   // 3. Canonical URL
   setLinkTag('canonical', meta.canonical);

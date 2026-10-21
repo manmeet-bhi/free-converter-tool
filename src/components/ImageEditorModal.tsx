@@ -42,10 +42,13 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
   const [crop, setCrop] = useState<NormalizedCrop>({ x: 0, y: 0, width: 1, height: 1 });
   const [isApplying, setIsApplying] = useState<boolean>(false);
 
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
   const [naturalDimensions, setNaturalDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [displaySize, setDisplaySize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Dragging state
   const dragRef = useRef<{
@@ -82,6 +85,59 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
   const isPerpendicular = rotation === 90 || rotation === 270;
   const effectiveWidth = isPerpendicular ? naturalDimensions.height : naturalDimensions.width;
   const effectiveHeight = isPerpendicular ? naturalDimensions.width : naturalDimensions.height;
+
+  // Measure workspace and calculate exact pixel dimensions for containerRef to prevent mobile flex layout issues
+  useEffect(() => {
+    if (!isOpen || !workspaceRef.current || effectiveWidth <= 0 || effectiveHeight <= 0) return;
+
+    const updateDisplaySize = () => {
+      if (!workspaceRef.current) return;
+      const rect = workspaceRef.current.getBoundingClientRect();
+      const padding = window.innerWidth < 640 ? 12 : 24;
+      const availW = Math.max(40, rect.width - padding * 2);
+      const availH = Math.max(40, rect.height - padding * 2);
+
+      const scale = Math.min(availW / effectiveWidth, availH / effectiveHeight);
+      const width = Math.max(20, Math.round(effectiveWidth * scale));
+      const height = Math.max(20, Math.round(effectiveHeight * scale));
+
+      setDisplaySize({ width, height });
+    };
+
+    updateDisplaySize();
+    const observer = new ResizeObserver(updateDisplaySize);
+    observer.observe(workspaceRef.current);
+    window.addEventListener('resize', updateDisplaySize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateDisplaySize);
+    };
+  }, [isOpen, effectiveWidth, effectiveHeight]);
+
+  // Render rotated and flipped image on preview canvas (100% distortion-free on mobile)
+  useEffect(() => {
+    if (!canvasRef.current || !imgRef.current || !imageLoaded) return;
+    const canvas = canvasRef.current;
+    canvas.width = effectiveWidth;
+    canvas.height = effectiveHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, effectiveWidth, effectiveHeight);
+    ctx.save();
+    ctx.translate(effectiveWidth / 2, effectiveHeight / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    ctx.drawImage(
+      imgRef.current,
+      -naturalDimensions.width / 2,
+      -naturalDimensions.height / 2,
+      naturalDimensions.width,
+      naturalDimensions.height
+    );
+    ctx.restore();
+  }, [imageLoaded, effectiveWidth, effectiveHeight, rotation, flipH, flipV, naturalDimensions]);
 
   // Aspect ratio helper
   const getAspectRatioValue = useCallback((ratio: AspectRatioOption): number | null => {
@@ -181,32 +237,43 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
     setCrop({ x: 0, y: 0, width: 1, height: 1 });
   };
 
-  // Pointer drag handling for crop box & handles
+  // Pointer drag handling for crop box & handles (touch & mouse optimized)
   const handlePointerDown = (
-    e: React.PointerEvent,
+    e: React.PointerEvent<HTMLDivElement>,
     type: 'move' | 'nw' | 'ne' | 'se' | 'sw' | 'n' | 's' | 'e' | 'w'
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
+    const targetElement = e.currentTarget as HTMLElement;
+    try {
+      targetElement.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if setPointerCapture is unsupported
+    }
+
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const boxWidth = rect.width > 0 ? rect.width : displaySize.width;
+    const boxHeight = rect.height > 0 ? rect.height : displaySize.height;
+
+    if (boxWidth <= 0 || boxHeight <= 0) return;
 
     dragRef.current = {
       type,
       startX: e.clientX,
       startY: e.clientY,
       initialCrop: { ...crop },
-      boxWidth: rect.width,
-      boxHeight: rect.height,
+      boxWidth,
+      boxHeight,
     };
 
     const handlePointerMove = (ev: PointerEvent) => {
       if (!dragRef.current) return;
-      const { type: handleType, startX, startY, initialCrop, boxWidth, boxHeight } = dragRef.current;
+      const { type: handleType, startX, startY, initialCrop, boxWidth: bW, boxHeight: bH } = dragRef.current;
 
-      const deltaX = (ev.clientX - startX) / boxWidth;
-      const deltaY = (ev.clientY - startY) / boxHeight;
+      const deltaX = (ev.clientX - startX) / bW;
+      const deltaY = (ev.clientY - startY) / bH;
 
       let nextX = initialCrop.x;
       let nextY = initialCrop.y;
@@ -245,8 +312,25 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
           const normRatio = ratioVal * (effectiveHeight / effectiveWidth);
           if (handleType === 'e' || handleType === 'w') {
             nextH = Math.min(1 - nextY, nextW / normRatio);
-          } else {
+          } else if (handleType === 'n' || handleType === 's') {
             nextW = Math.min(1 - nextX, nextH * normRatio);
+          } else {
+            // Corner handles (nw, ne, se, sw)
+            const targetW = nextH * normRatio;
+            if (targetW <= 1 - nextX) {
+              nextW = targetW;
+            } else {
+              nextW = 1 - nextX;
+              nextH = nextW / normRatio;
+            }
+          }
+
+          // If dragging an anchor edge/corner on the left or top, re-align the origin
+          if (handleType.includes('w')) {
+            nextX = (initialCrop.x + initialCrop.width) - nextW;
+          }
+          if (handleType.includes('n')) {
+            nextY = (initialCrop.y + initialCrop.height) - nextH;
           }
         }
       }
@@ -263,10 +347,17 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
       dragRef.current = null;
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+      try {
+        targetElement.releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore
+      }
     };
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
   };
 
   // Render & Apply Changes
@@ -383,40 +474,34 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
   const croppedPixelWidth = Math.round(crop.width * effectiveWidth);
   const croppedPixelHeight = Math.round(crop.height * effectiveHeight);
 
-  // Transform style for the preview container
-  const transformStyle: React.CSSProperties = {
-    transform: `rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
-    transition: 'transform 0.2s ease-out',
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in">
       <div 
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-5xl h-[92vh] max-h-[850px] shadow-2xl flex flex-col overflow-hidden"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-5xl h-[95vh] sm:h-[92vh] max-h-[850px] shadow-2xl flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
-              <CropIcon className="w-5 h-5" />
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+              <CropIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h2 id="editor-modal-title" className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+              <h2 id="editor-modal-title" className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white truncate">
                 Edit Image: {imageItem.customFilename}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                Original: {naturalDimensions.width}×{naturalDimensions.height} px • Output: {croppedPixelWidth}×{croppedPixelHeight} px
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono">
+                {naturalDimensions.width}×{naturalDimensions.height} px • Output: {croppedPixelWidth}×{croppedPixelHeight} px
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
             <button
               onClick={handleResetAll}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Reset all edits"
             >
               <ResetIcon className="w-3.5 h-3.5" />
@@ -424,7 +509,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -433,15 +518,15 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 shrink-0 text-xs sm:text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 shrink-0 text-xs sm:text-sm">
           {/* Rotate & Flip Tools */}
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto pb-0.5 sm:pb-0">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline">Transform:</span>
             
             <button
               type="button"
               onClick={handleRotateLeft}
-              className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors flex items-center space-x-1"
+              className="p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors flex items-center space-x-1 shrink-0"
               title="Rotate Left 90°"
             >
               <RotateCcw className="w-4 h-4" />
@@ -451,19 +536,19 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
             <button
               type="button"
               onClick={handleRotateRight}
-              className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors flex items-center space-x-1"
+              className="p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors flex items-center space-x-1 shrink-0"
               title="Rotate Right 90°"
             >
               <RotateCw className="w-4 h-4" />
               <span className="text-xs font-semibold hidden md:inline">+90°</span>
             </button>
 
-            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
+            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1 shrink-0" />
 
             <button
               type="button"
               onClick={handleFlipHorizontal}
-              className={`p-2 rounded-xl border shadow-xs transition-colors flex items-center space-x-1 ${
+              className={`p-1.5 sm:p-2 rounded-xl border shadow-xs transition-colors flex items-center space-x-1 shrink-0 ${
                 flipH 
                   ? 'bg-blue-600 text-white border-blue-600' 
                   : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -477,7 +562,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
             <button
               type="button"
               onClick={handleFlipVertical}
-              className={`p-2 rounded-xl border shadow-xs transition-colors flex items-center space-x-1 ${
+              className={`p-1.5 sm:p-2 rounded-xl border shadow-xs transition-colors flex items-center space-x-1 shrink-0 ${
                 flipV 
                   ? 'bg-blue-600 text-white border-blue-600' 
                   : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -490,7 +575,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
           </div>
 
           {/* Aspect Ratio Presets */}
-          <div className="flex items-center space-x-1 overflow-x-auto">
+          <div className="flex items-center space-x-1 overflow-x-auto max-w-full pb-0.5 sm:pb-0 scrollbar-none">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden lg:inline">Crop Ratio:</span>
             {(['free', '1:1', '16:9', '9:16', '4:3', '3:2'] as AspectRatioOption[]).map((ratio) => {
               const isSelected = aspectRatio === ratio;
@@ -499,7 +584,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                   key={ratio}
                   type="button"
                   onClick={() => handleAspectRatioChange(ratio)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                     isSelected
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -513,33 +598,38 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
             <button
               type="button"
               onClick={handleResetCrop}
-              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
+              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1 shrink-0"
               title="Reset Crop to Full Image"
             >
-              Reset Crop
+              Reset
             </button>
           </div>
         </div>
 
         {/* Workspace: Image Preview & Interactive Crop Box */}
-        <div className="flex-1 min-h-0 bg-slate-950 flex items-center justify-center p-4 sm:p-8 select-none overflow-hidden relative">
+        <div 
+          ref={workspaceRef}
+          className="flex-1 min-h-0 bg-slate-950 flex items-center justify-center p-3 sm:p-6 select-none overflow-hidden relative touch-none"
+        >
           {imageLoaded ? (
             <div 
               ref={containerRef}
-              className="relative max-w-full max-h-full flex items-center justify-center"
+              className="relative select-none touch-none flex items-center justify-center shrink-0"
               style={{
-                aspectRatio: `${effectiveWidth} / ${effectiveHeight}`,
+                width: displaySize.width > 0 ? `${displaySize.width}px` : 'auto',
+                height: displaySize.height > 0 ? `${displaySize.height}px` : 'auto',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                aspectRatio: displaySize.width > 0 ? undefined : `${effectiveWidth} / ${effectiveHeight}`,
               }}
             >
-              {/* Rotated & Flipped Image Display */}
-              <img
-                src={imageItem.originalInfo.previewUrl}
-                alt="Editing Preview"
-                style={transformStyle}
-                className="max-w-full max-h-full object-contain pointer-events-none rounded shadow-md"
+              {/* Rotated & Flipped Live Preview Canvas (exact pixel geometry, no CSS transform mismatch) */}
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full object-contain pointer-events-none rounded shadow-md block"
               />
 
-              {/* Dark Overlay Outside Crop Area (using 4 surrounding translucent boxes) */}
+              {/* Dark Overlay Outside Crop Area (using polygon clip-path) */}
               <div 
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -562,7 +652,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
               {/* Draggable & Resizable Crop Box */}
               <div
                 onPointerDown={(e) => handlePointerDown(e, 'move')}
-                className="absolute border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)] cursor-move transition-[box-shadow]"
+                className="absolute border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)] cursor-move transition-[box-shadow] touch-none"
                 style={{
                   left: `${crop.x * 100}%`,
                   top: `${crop.y * 100}%`,
@@ -583,45 +673,57 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                   <div />
                 </div>
 
-                {/* Dimension Badge */}
-                <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded shadow pointer-events-none whitespace-nowrap">
+                {/* Dimension Badge - intelligently stays inside if near top edge */}
+                <div 
+                  className={`absolute left-1/2 -translate-x-1/2 bg-slate-900/90 text-white font-mono text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-30 transition-all ${
+                    crop.y < 0.08 ? 'top-2' : '-top-7'
+                  }`}
+                >
                   {croppedPixelWidth} × {croppedPixelHeight}
                 </div>
 
-                {/* 4 Corner Handles */}
+                {/* 4 Corner Handles with expanded 44px+ touch-friendly hit areas */}
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'nw')}
-                  className="absolute -top-2 -left-2 w-4 h-4 bg-white border-2 border-blue-600 rounded-xs shadow cursor-nwse-resize z-10"
+                  className="absolute -top-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-blue-600 rounded-sm shadow-md cursor-nwse-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Top Left"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'ne')}
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-blue-600 rounded-xs shadow cursor-nesw-resize z-10"
+                  className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-blue-600 rounded-sm shadow-md cursor-nesw-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Top Right"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'se')}
-                  className="absolute -bottom-2 -right-2 w-4 h-4 bg-white border-2 border-blue-600 rounded-xs shadow cursor-nwse-resize z-10"
+                  className="absolute -bottom-2.5 -right-2.5 w-5 h-5 bg-white border-2 border-blue-600 rounded-sm shadow-md cursor-nwse-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Bottom Right"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'sw')}
-                  className="absolute -bottom-2 -left-2 w-4 h-4 bg-white border-2 border-blue-600 rounded-xs shadow cursor-nesw-resize z-10"
+                  className="absolute -bottom-2.5 -left-2.5 w-5 h-5 bg-white border-2 border-blue-600 rounded-sm shadow-md cursor-nesw-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Bottom Left"
                 />
 
-                {/* 4 Edge Handles */}
+                {/* 4 Edge Handles with expanded touch-friendly hit areas */}
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'n')}
-                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-2 bg-white border border-blue-600 rounded-xs shadow cursor-ns-resize z-10"
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-3 bg-white border border-blue-600 rounded-sm shadow cursor-ns-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Top Edge"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 's')}
-                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-6 h-2 bg-white border border-blue-600 rounded-xs shadow cursor-ns-resize z-10"
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-3 bg-white border border-blue-600 rounded-sm shadow cursor-ns-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Bottom Edge"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'w')}
-                  className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-2 h-6 bg-white border border-blue-600 rounded-xs shadow cursor-ew-resize z-10"
+                  className="absolute -left-2 top-1/2 -translate-y-1/2 w-3 h-8 bg-white border border-blue-600 rounded-sm shadow cursor-ew-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Left Edge"
                 />
                 <div
                   onPointerDown={(e) => handlePointerDown(e, 'e')}
-                  className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2 h-6 bg-white border border-blue-600 rounded-xs shadow cursor-ew-resize z-10"
+                  className="absolute -right-2 top-1/2 -translate-y-1/2 w-3 h-8 bg-white border border-blue-600 rounded-sm shadow cursor-ew-resize z-20 touch-none after:absolute after:-inset-3 after:content-['']"
+                  aria-label="Resize Right Edge"
                 />
               </div>
             </div>

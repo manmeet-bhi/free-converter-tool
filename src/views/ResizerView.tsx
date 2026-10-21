@@ -3,31 +3,32 @@ import { ImageItem } from '../types';
 import { DropZone } from '../components/DropZone';
 import { ImagePreviewModal } from '../components/ImagePreviewModal';
 import { ConversionProgressBar } from '../components/ConversionProgressBar';
-import { 
-  getAvailableOutputFormats, 
-  ImageFormat 
+import {
+  getAvailableOutputFormats,
+  ImageFormat
 } from '../utils/formatSupport';
-import { 
-  processImage, 
-  formatBytes, 
-  revokeUrl 
+import {
+  processImage,
+  formatBytes,
+  revokeUrl
 } from '../utils/imageProcessor';
 import { createZipArchive, downloadBlob } from '../utils/zipExporter';
-import { 
-  Scaling, 
-  Download, 
-  Trash2, 
-  Lock, 
-  Unlock, 
-  AlertTriangle, 
-  Archive, 
-  RefreshCw, 
-  Sliders, 
-  Eye, 
+import {
+  Scaling,
+  Download,
+  Trash2,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  Archive,
+  RefreshCw,
+  Sliders,
+  Eye,
   CheckCircle2,
   Sparkles,
   Plus,
-  Crop
+  Crop,
+  Target
 } from 'lucide-react';
 import { ImageEditorModal } from '../components/ImageEditorModal';
 import confetti from 'canvas-confetti';
@@ -74,6 +75,12 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
   const [scalePercent, setScalePercent] = useState<number>(100);
   const [selectedFormat, setSelectedFormat] = useState<ImageFormat>('webp');
   const [quality, setQuality] = useState<number>(0.85);
+
+  // Target output file size option state
+  const [useTargetSize, setUseTargetSize] = useState<boolean>(false);
+  const [targetSizeInput, setTargetSizeInput] = useState<string>('200');
+  const [targetSizeUnit, setTargetSizeUnit] = useState<'KB' | 'MB'>('KB');
+
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [resizingFileName, setResizingFileName] = useState<string>('');
   const [completedResizeCount, setCompletedResizeCount] = useState<number>(0);
@@ -145,12 +152,21 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
         finalH = Math.max(1, Math.round(w / itemRatio));
       }
 
+      let targetBytes: number | undefined = undefined;
+      if (useTargetSize) {
+        const num = parseFloat(targetSizeInput);
+        if (!isNaN(num) && num > 0) {
+          targetBytes = targetSizeUnit === 'MB' ? num * 1024 * 1024 : num * 1024;
+        }
+      }
+
       const result = await processImage(item.originalInfo, {
         format: selectedFormat,
         quality,
         width: finalW,
         height: finalH,
         backgroundColor: item.backgroundColor,
+        targetSizeBytes: targetBytes,
         originalSizeBytes: item.originalSize,
       });
 
@@ -165,14 +181,15 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
         prev.map((i) =>
           i.id === item.id
             ? {
-                ...i,
-                status: 'done',
-                result,
-                customFilename: newName,
-                targetWidth: finalW,
-                targetHeight: finalH,
-                targetFormat: selectedFormat,
-              }
+              ...i,
+              status: 'done',
+              result,
+              customFilename: newName,
+              targetWidth: result.width || finalW,
+              targetHeight: result.height || finalH,
+              targetFormat: selectedFormat,
+              targetSizeBytes: targetBytes,
+            }
             : i
         )
       );
@@ -211,7 +228,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
     }));
 
     try {
-      await createZipArchive(filesToZip, `imagekit-resized-${Date.now()}.zip`);
+      await createZipArchive(filesToZip, `imagetooltip-resized-${Date.now()}.zip`);
     } catch {
       alert('Failed to generate ZIP archive.');
     } finally {
@@ -220,10 +237,26 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
   };
 
   const isUpscaling = images[0] && (targetWidth > images[0].originalDimensions.width || targetHeight > images[0].originalDimensions.height);
-  const completedCount = images.filter((i) => i.status === 'done').length;
+  const completedItems = images.filter((i) => i.status === 'done' && i.result);
+  const completedCount = completedItems.length;
+  const totalOutputBytes = completedItems.reduce((acc, item) => acc + (item.result?.fileSizeBytes || 0), 0);
+  const avgOutputBytes = completedItems.length > 0 ? totalOutputBytes / completedItems.length : 0;
+  const totalOriginalBytes = completedItems.reduce((acc, item) => acc + item.originalSize, 0);
+  const totalSavingsBytes = totalOriginalBytes - totalOutputBytes;
+  const totalSavingsPercent = totalOriginalBytes > 0 && totalSavingsBytes > 0
+    ? Math.round((totalSavingsBytes / totalOriginalBytes) * 100)
+    : 0;
+
+  const targetBytes = useTargetSize && parseFloat(targetSizeInput) > 0
+    ? (targetSizeUnit === 'MB' ? parseFloat(targetSizeInput) * 1024 * 1024 : parseFloat(targetSizeInput) * 1024)
+    : undefined;
+
+  const isUnderTargetBudget = targetBytes && completedItems.length > 0
+    ? completedItems.every((item) => (item.result?.fileSizeBytes || 0) <= targetBytes)
+    : false;
 
   return (
-    <div className="space-y-8 py-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-6 sm:space-y-8 py-4 sm:py-6 max-w-6xl mx-auto px-3 sm:px-4">
       {/* Hidden file input for adding more images */}
       <input
         ref={addMoreInputRef}
@@ -310,7 +343,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
       {images.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Controls Panel (Left 5 Cols) */}
-          <div className="lg:col-span-5 space-y-6 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="lg:col-span-5 space-y-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
             {/* Dimension inputs */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -320,11 +353,10 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setMaintainAspect(!maintainAspect)}
-                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                    maintainAspect
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                  }`}
+                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${maintainAspect
+                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    }`}
                   title="Toggle Maintain Aspect Ratio"
                 >
                   {maintainAspect ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
@@ -364,17 +396,16 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
               <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
                 Quick Scale by Percentage
               </label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                 {[25, 50, 75, 100, 150].map((pct) => (
                   <button
                     key={pct}
                     type="button"
                     onClick={() => handleApplyPercent(pct)}
-                    className={`py-2 rounded-xl text-sm font-mono font-bold border transition-colors ${
-                      scalePercent === pct
-                        ? 'border-cyan-600 bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
+                    className={`py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-mono font-bold border transition-colors ${scalePercent === pct
+                      ? 'border-cyan-600 bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
                   >
                     {pct}%
                   </button>
@@ -415,7 +446,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             )}
 
             {/* Output Format and Quality */}
-            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Export Format
@@ -433,7 +464,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                 </select>
               </div>
 
-              {(selectedFormat === 'jpeg' || selectedFormat === 'webp') && (
+              {(selectedFormat === 'jpeg' || selectedFormat === 'webp' || selectedFormat === 'avif' || selectedFormat === 'png') && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-bold text-slate-700 dark:text-slate-300">Quality:</span>
                   <div className="flex items-center space-x-2">
@@ -452,6 +483,162 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Target File Size Input Option */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center space-x-2 cursor-pointer text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={useTargetSize}
+                      onChange={(e) => setUseTargetSize(e.target.checked)}
+                      className="w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                    />
+                    <span className="flex items-center space-x-1.5">
+                      <Target className="w-3.5 h-3.5 text-cyan-500" />
+                      <span>Target File Size</span>
+                    </span>
+                  </label>
+                  {useTargetSize && (
+                    <span className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-200 dark:border-cyan-900/60">
+                      Max {targetSizeInput} {targetSizeUnit}
+                    </span>
+                  )}
+                </div>
+
+                {useTargetSize && (
+                  <div className="space-y-2 animate-fade-in pt-1">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                      Set maximum target file size. Output will be compressed and optimized to fit your limit.
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min="5"
+                        max="50000"
+                        value={targetSizeInput}
+                        onChange={(e) => setTargetSizeInput(e.target.value)}
+                        placeholder="e.g. 200"
+                        className="flex-1 text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      />
+                      <select
+                        value={targetSizeUnit}
+                        onChange={(e) => setTargetSizeUnit(e.target.value as 'KB' | 'MB')}
+                        className="text-sm font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 cursor-pointer"
+                      >
+                        <option value="KB">KB</option>
+                        <option value="MB">MB</option>
+                      </select>
+                    </div>
+
+                    {/* Quick presets */}
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {['50', '100', '250', '500', '1000'].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => {
+                            setTargetSizeInput(val);
+                            setTargetSizeUnit('KB');
+                          }}
+                          className={`px-2 py-1 rounded-lg text-xs font-mono font-semibold transition-colors ${targetSizeInput === val && targetSizeUnit === 'KB'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                            }`}
+                        >
+                          {val} KB
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Output Result Feedback in Export Format Section */}
+              <div className="p-3.5 rounded-xl border bg-gradient-to-br from-slate-50 to-cyan-50/40 dark:from-slate-800/80 dark:to-cyan-950/20 border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
+                    <span>Export Output Details</span>
+                  </span>
+                  {completedItems.length > 0 ? (
+                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>{completedItems.length} Generated</span>
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      Ready to Resize
+                    </span>
+                  )}
+                </div>
+
+                {completedItems.length > 0 ? (
+                  <div className="space-y-2 pt-1 text-xs">
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-semibold text-slate-600 dark:text-slate-400">Output File Size:</span>
+                      <span className="text-sm sm:text-base font-mono font-extrabold text-cyan-600 dark:text-cyan-400">
+                        {formatBytes(totalOutputBytes)}
+                        {completedItems.length > 1 && (
+                          <span className="text-[11px] font-normal text-slate-500 ml-1">
+                            (avg {formatBytes(avgOutputBytes)})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {useTargetSize && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-600 dark:text-slate-400">Target Budget:</span>
+                        <span className={`font-mono font-bold flex items-center space-x-1 ${isUnderTargetBudget
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-amber-600 dark:text-amber-400'
+                          }`}>
+                          <span>≤ {targetSizeInput} {targetSizeUnit}</span>
+                          <span>{isUnderTargetBudget ? '✓ (Met)' : '•'}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {totalSavingsBytes > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-600 dark:text-slate-400">Saved:</span>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          -{totalSavingsPercent}% ({formatBytes(totalSavingsBytes)})
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <span>Dimensions & Format:</span>
+                      <span className="font-mono font-semibold uppercase text-slate-700 dark:text-slate-300">
+                        {selectedFormat} • {targetWidth}×{targetHeight} px
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 pt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center justify-between">
+                      <span>Target File Size:</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                        {useTargetSize ? `≤ ${targetSizeInput} ${targetSizeUnit}` : 'Auto (Standard Quality)'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Target Dimensions:</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                        {targetWidth} × {targetHeight} px
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Output Format:</span>
+                      <span className="font-mono font-bold uppercase text-cyan-600 dark:text-cyan-400">
+                        {selectedFormat}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Actions */}
@@ -491,16 +678,15 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
             {images.map((item) => (
               <div
                 key={item.id}
-                className={`bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border transition-all ${
-                  item.status === 'done'
-                    ? 'border-emerald-300 dark:border-emerald-900/60 shadow-xs'
-                    : 'border-slate-200 dark:border-slate-800'
-                }`}
+                className={`bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border transition-all ${item.status === 'done'
+                  ? 'border-emerald-300 dark:border-emerald-900/60 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800'
+                  }`}
               >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                   {/* Thumbnail and Info */}
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0 bg-checkerboard-light dark:bg-checkerboard-dark flex items-center justify-center">
+                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0 bg-slate-100 dark:bg-slate-800/70 flex items-center justify-center">
                       <img
                         src={item.result?.previewUrl || item.originalInfo.previewUrl}
                         alt={item.customFilename}
@@ -509,19 +695,31 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                     </div>
 
                     <div className="min-w-0 space-y-1">
-                      <div className="font-bold text-slate-800 dark:text-slate-100 text-base truncate max-w-xs sm:max-w-md">
+                      <div className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base truncate max-w-[200px] sm:max-w-md">
                         {item.customFilename}
                       </div>
-                      <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono flex flex-wrap items-center gap-2">
+                      <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <span>Original: {item.originalDimensions.width}×{item.originalDimensions.height}</span>
                         {item.result && (
                           <>
                             <span>&rarr;</span>
                             <span className="font-bold text-cyan-600 dark:text-cyan-400">
-                              Target: {item.result.width}×{item.result.height} px
+                              {item.result.width}×{item.result.height} px
                             </span>
                             <span>•</span>
-                            <span>{formatBytes(item.result.fileSizeBytes)}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                              {formatBytes(item.result.fileSizeBytes)}
+                            </span>
+                            {targetBytes && (
+                              <span className={`font-bold ${item.result.fileSizeBytes <= targetBytes
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-amber-600 dark:text-amber-400'
+                                }`}>
+                                {item.result.fileSizeBytes <= targetBytes
+                                  ? `(✓ ≤ ${formatBytes(targetBytes)})`
+                                  : `(Target: ≤ ${formatBytes(targetBytes)})`}
+                              </span>
+                            )}
                           </>
                         )}
                       </div>
@@ -529,7 +727,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                   </div>
 
                   {/* Individual actions */}
-                  <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                  <div className="flex items-center space-x-2 w-full sm:w-auto justify-end pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800/80">
                     {/* Edit (Crop, Rotate, Flip) button */}
                     <button
                       type="button"
@@ -573,7 +771,7 @@ export const ResizerView: React.FC<ResizerViewProps> = ({
                       </span>
                       <span className="animate-pulse">Active</span>
                     </div>
-                    <div 
+                    <div
                       className="w-full bg-slate-200 dark:bg-slate-800 rounded-md h-3.5 p-0.5 overflow-hidden shadow-inner border border-slate-300 dark:border-slate-700"
                       role="progressbar"
                       aria-label={`Resizing ${item.customFilename}`}
