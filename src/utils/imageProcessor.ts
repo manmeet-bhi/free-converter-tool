@@ -31,11 +31,14 @@ export interface LoadedImageInfo {
   originalFormat?: string;
 }
 
+export type ImageFitMode = 'cover' | 'contain' | 'fill';
+
 export interface ProcessOptions {
   format: ImageFormat;
   quality: number; // 0.1 to 1.0
   width?: number;
   height?: number;
+  fit?: ImageFitMode; // 'cover' (center crop, no distortion), 'contain' (pad/letterbox, no distortion), 'fill' (stretch)
   backgroundColor?: string; // hex string, e.g. '#ffffff' for filling transparency in JPEG/BMP
   forceSolidBackground?: boolean; // whether to flatten transparency for formats that support alpha
   targetSizeBytes?: number; // target file size in bytes for binary search compression
@@ -280,7 +283,7 @@ export async function processImage(
   }
 
   const requiresSolidBackground = options.format === 'jpeg' || options.format === 'bmp';
-  if (requiresSolidBackground || (options.forceSolidBackground && options.backgroundColor)) {
+  if (requiresSolidBackground || (options.forceSolidBackground && options.backgroundColor) || (options.fit === 'contain' && options.backgroundColor)) {
     ctx.fillStyle = options.backgroundColor || '#FFFFFF';
     ctx.fillRect(0, 0, targetWidth, targetHeight);
   } else {
@@ -289,7 +292,31 @@ export async function processImage(
 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(imageInfo.source, 0, 0, targetWidth, targetHeight);
+
+  const fitMode: ImageFitMode = options.fit || 'fill';
+  const sw = imageInfo.width;
+  const sh = imageInfo.height;
+
+  if (fitMode === 'cover') {
+    // Uniform scale to fill canvas completely, center crop - natural proportions without stretching
+    const scale = Math.max(targetWidth / sw, targetHeight / sh);
+    const rw = sw * scale;
+    const rh = sh * scale;
+    const dx = (targetWidth - rw) / 2;
+    const dy = (targetHeight - rh) / 2;
+    ctx.drawImage(imageInfo.source, dx, dy, rw, rh);
+  } else if (fitMode === 'contain') {
+    // Uniform scale to fit entirely within canvas, with letterbox/pillarbox padding - zero distortion
+    const scale = Math.min(targetWidth / sw, targetHeight / sh);
+    const rw = sw * scale;
+    const rh = sh * scale;
+    const dx = (targetWidth - rw) / 2;
+    const dy = (targetHeight - rh) / 2;
+    ctx.drawImage(imageInfo.source, dx, dy, rw, rh);
+  } else {
+    // Direct stretch ('fill')
+    ctx.drawImage(imageInfo.source, 0, 0, targetWidth, targetHeight);
+  }
 
   let blob: Blob;
 

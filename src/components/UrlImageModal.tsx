@@ -324,6 +324,17 @@ export const UrlImageModal: React.FC<UrlImageModalProps> = ({
                   </span>
                   <button
                     type="button"
+                    onClick={() => {
+                      const sample = 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1000&q=80';
+                      setTextInput(sample);
+                      setErrorMessage(null);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 transition-colors inline-flex items-center space-x-1"
+                  >
+                    <span>Sample</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={handlePasteClipboard}
                     className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors inline-flex items-center space-x-1"
                   >

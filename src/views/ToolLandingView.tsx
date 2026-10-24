@@ -121,6 +121,7 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
             images={images}
             setImages={setImages}
             onFilesSelected={onFilesSelected}
+            hideHeader={true}
           />
         )}
         {config.toolType === 'resizer' && (
@@ -128,6 +129,7 @@ export const ToolLandingView: React.FC<ToolLandingViewProps> = ({
             images={images}
             setImages={setImages}
             onFilesSelected={onFilesSelected}
+            hideHeader={true}
           />
         )}
       </section>

@@ -14,7 +14,6 @@ import {
 import { 
   checkContactRateLimit, 
   recordContactSubmission, 
-  MAX_CONTACT_SUBMISSIONS_PER_HOUR,
   ContactRateLimitStatus 
 } from '../utils/rateLimit';
 
@@ -49,11 +48,11 @@ export const ContactView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Rate Limiting Check (Max 3 submissions per hour)
+    // 1. Anti-spam check
     const currentRateLimit = checkContactRateLimit();
     if (currentRateLimit.isRateLimited) {
       setError(
-        `Rate limit reached: You can submit up to ${MAX_CONTACT_SUBMISSIONS_PER_HOUR} messages per hour. Please wait ${currentRateLimit.minutesRemaining} minute${currentRateLimit.minutesRemaining === 1 ? '' : 's'} before submitting again.`
+        `Please wait ${currentRateLimit.minutesRemaining} minute${currentRateLimit.minutesRemaining === 1 ? '' : 's'} before submitting another message, or email us directly at support@free-picture-converter.com.`
       );
       setRateLimitStatus(currentRateLimit);
       return;
@@ -209,16 +208,6 @@ export const ContactView: React.FC = () => {
                   Thank you for reaching out to imagetooltip. Our team will review your message and respond to <strong>{formData.email}</strong> shortly.
                 </p>
 
-                {/* Submissions Remaining Counter after submit */}
-                <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>
-                    {rateLimitStatus.remainingSubmissions > 0
-                      ? `${rateLimitStatus.remainingSubmissions} of ${MAX_CONTACT_SUBMISSIONS_PER_HOUR} hourly submissions remaining`
-                      : 'Hourly submission limit reached'}
-                  </span>
-                </div>
-
                 <div className="pt-4">
                   <button
                     onClick={handleReset}
@@ -242,9 +231,10 @@ export const ContactView: React.FC = () => {
 
                 {/* Honeypot Spam Filter */}
                 <div className="hidden" aria-hidden="true" style={{ display: 'none' }}>
-                  <label>
+                  <label htmlFor="contact-bot-field">
                     Don't fill this out if you're human:
                     <input
+                      id="contact-bot-field"
                       name="bot-field"
                       tabIndex={-1}
                       autoComplete="off"
@@ -265,9 +255,9 @@ export const ContactView: React.FC = () => {
                   <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-sm text-amber-900 dark:text-amber-200 flex items-start space-x-3 animate-fade-in">
                     <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <div className="space-y-1">
-                      <p className="font-bold text-sm">Hourly Limit Reached</p>
+                      <p className="font-bold text-sm">Please Wait Before Sending Another Message</p>
                       <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 leading-relaxed">
-                        To protect our support inbox, you can submit up to {MAX_CONTACT_SUBMISSIONS_PER_HOUR} messages per hour. Please wait{' '}
+                        To prevent duplicate submissions, please wait{' '}
                         <strong className="font-semibold text-amber-900 dark:text-amber-100">{rateLimitStatus.minutesRemaining} minute{rateLimitStatus.minutesRemaining === 1 ? '' : 's'}</strong>{' '}
                         before sending another message, or email us directly at <span className="font-mono text-xs font-semibold bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">support@free-picture-converter.com</span>.
                       </p>
@@ -291,6 +281,7 @@ export const ContactView: React.FC = () => {
                       id="contact-name"
                       name="name"
                       type="text"
+                      autoComplete="name"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -308,6 +299,7 @@ export const ContactView: React.FC = () => {
                       id="contact-email"
                       name="email"
                       type="email"
+                      autoComplete="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -325,6 +317,7 @@ export const ContactView: React.FC = () => {
                   <select
                     id="contact-subject"
                     name="subject"
+                    autoComplete="off"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     disabled={isSubmitting}
@@ -345,6 +338,7 @@ export const ContactView: React.FC = () => {
                   <textarea
                     id="contact-message"
                     name="message"
+                    autoComplete="off"
                     required
                     rows={5}
                     value={formData.message}
@@ -375,7 +369,7 @@ export const ContactView: React.FC = () => {
                     ) : rateLimitStatus.isRateLimited ? (
                       <>
                         <Clock className="w-4 h-4" />
-                        <span>Limit Reached ({rateLimitStatus.minutesRemaining}m wait)</span>
+                        <span>Please Wait ({rateLimitStatus.minutesRemaining}m)</span>
                       </>
                     ) : (
                       <>
@@ -385,21 +379,16 @@ export const ContactView: React.FC = () => {
                     )}
                   </button>
 
-                  {/* Hourly Rate Limit Status Indicator */}
+                  {/* Response time info */}
                   <div className="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-slate-400">
                     <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>
                       {rateLimitStatus.isRateLimited ? (
                         <span className="text-amber-600 dark:text-amber-400 font-medium">
-                          Limit reached &bull; resets in ~{rateLimitStatus.minutesRemaining}m
+                          Resets in ~{rateLimitStatus.minutesRemaining}m
                         </span>
                       ) : (
-                        <span>
-                          Limit: {MAX_CONTACT_SUBMISSIONS_PER_HOUR}/hr &bull;{' '}
-                          <strong className="text-slate-700 dark:text-slate-300 font-semibold">
-                            {rateLimitStatus.remainingSubmissions} remaining
-                          </strong>
-                        </span>
+                        <span>Usually replies within 24–48 hours</span>
                       )}
                     </span>
                   </div>

@@ -9,6 +9,8 @@ interface CompareSliderProps {
   originalSizeText?: string;
   processedSizeText?: string;
   hasTransparency?: boolean;
+  heightClass?: string;
+  hideHeader?: boolean;
 }
 
 export const CompareSlider: React.FC<CompareSliderProps> = ({
@@ -19,6 +21,8 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
   originalSizeText,
   processedSizeText,
   hasTransparency = false,
+  heightClass,
+  hideHeader = false,
 }) => {
   const [sliderPosition, setSliderPosition] = useState(50); // percentage (0-100)
   const [isDragging, setIsDragging] = useState(false);
@@ -61,14 +65,16 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
   };
 
   return (
-    <div className="space-y-2 select-none">
-      <div className="flex items-center justify-between text-sm font-semibold text-slate-600 dark:text-slate-300">
-        <div className="flex items-center space-x-2">
-          <Eye className="w-4 h-4 text-blue-500" />
-          <span>Interactive Before / After Comparison</span>
+    <div className="space-y-2 select-none w-full h-full flex flex-col">
+      {!hideHeader && (
+        <div className="flex items-center justify-between text-sm font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+          <div className="flex items-center space-x-2">
+            <Eye className="w-4 h-4 text-blue-500" />
+            <span>Interactive Before / After Comparison</span>
+          </div>
+          <span className="text-xs text-slate-400 font-normal">Drag center handle</span>
         </div>
-        <span className="text-xs text-slate-400 font-normal">Drag center handle</span>
-      </div>
+      )}
 
       <div
         ref={containerRef}
@@ -76,7 +82,7 @@ export const CompareSlider: React.FC<CompareSliderProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="relative w-full h-72 sm:h-96 rounded-xl overflow-hidden cursor-ew-resize border border-slate-200 dark:border-slate-800 touch-none select-none bg-slate-950"
+        className={`relative w-full ${heightClass || 'h-72 sm:h-96'} rounded-xl overflow-hidden cursor-ew-resize border border-slate-200 dark:border-slate-800 touch-none select-none bg-slate-950 flex-1`}
       >
         {/* Processed (After) Image - Full width underlayer */}
         <div className="absolute inset-0 flex items-center justify-center p-2">

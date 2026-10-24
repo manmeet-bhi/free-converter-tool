@@ -5,7 +5,7 @@
  */
 
 export const CONTACT_RATE_LIMIT_KEY = 'imagetooltip_contact_rate_limit';
-export const MAX_CONTACT_SUBMISSIONS_PER_HOUR = 3;
+export const MAX_CONTACT_SUBMISSIONS_PER_HOUR = 5;
 export const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour (3,600,000 ms)
 
 export interface ContactRateLimitStatus {

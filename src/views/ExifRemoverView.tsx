@@ -24,12 +24,14 @@ import {
   FileText,
   FileCode,
   FileSpreadsheet,
-  FileBox,
   FileImage,
   Video,
+  Music,
   ShieldCheck,
   Layers,
   BookOpen,
+  Plus,
+  Settings,
 } from 'lucide-react';
 import { DropZone } from '../components/DropZone';
 import { UploadProgressBar, UploadStatus } from '../components/UploadProgressBar';
@@ -37,6 +39,9 @@ import { readExifData, stripExifFromFile, ExifData, ExifTag, ExifRemovalResult }
 import { formatBytes } from '../utils/imageProcessor';
 import { downloadBlob, createZipArchive } from '../utils/zipExporter';
 import { exportExifToHtml, exportExifToCsv, exportExifToJson, exportExifToTxt } from '../utils/exifExporter';
+
+export const ALL_MEDIA_ACCEPT =
+  'image/*,video/*,audio/*,application/pdf,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tiff,.tif,.heic,.heif,.mp4,.mov,.webm,.mkv,.avi,.m4v,.wmv,.flv,.3gp,.3g2,.ts,.mts,.m2ts,.ogv,.f4v,.vob,.mpg,.mpeg,.asf,.divx,.m2v,.mp3,.m4a,.wav,.flac,.ogg,.opus,.aac,.wma,.pdf';
 
 interface ExifFile {
   id: string;
@@ -46,7 +51,7 @@ interface ExifFile {
   result: ExifRemovalResult | null;
   status: 'reading' | 'ready' | 'processing' | 'done' | 'error';
   error?: string;
-  fileKind: 'image' | 'video' | 'pdf';
+  fileKind: 'image' | 'video' | 'audio' | 'pdf';
 }
 
 const CATEGORY_CONFIG = {
@@ -58,12 +63,23 @@ const CATEGORY_CONFIG = {
   other: { label: 'Other Metadata', icon: Tag, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-900', border: 'border-slate-200 dark:border-slate-800' },
 };
 
-function getFileKind(file: File): 'image' | 'video' | 'pdf' {
+function getFileKind(file: File): 'image' | 'video' | 'audio' | 'pdf' {
   const name = file.name.toLowerCase();
-  if (file.type.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mov')) {
+  const type = file.type.toLowerCase();
+
+  if (
+    type.startsWith('video/') ||
+    /\.(mp4|mov|webm|mkv|avi|m4v|wmv|flv|3gp|3g2|ts|mts|m2ts|ogv|f4v|vob|mpg|mpeg|asf|divx|m2v)$/i.test(name)
+  ) {
     return 'video';
   }
-  if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
+  if (
+    type.startsWith('audio/') ||
+    /\.(mp3|m4a|wav|flac|ogg|oga|opus|aac|wma|aiff|alac)$/i.test(name)
+  ) {
+    return 'audio';
+  }
+  if (type === 'application/pdf' || name.endsWith('.pdf')) {
     return 'pdf';
   }
   return 'image';
@@ -87,6 +103,7 @@ export const ExifRemoverView: React.FC = () => {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [activeGuideStyle, setActiveGuideStyle] = useState<'saas' | 'wiki'>('saas');
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
 
   // Optimized Progress States for adding media & stripping
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
@@ -107,6 +124,8 @@ export const ExifRemoverView: React.FC = () => {
 
   const addMoreRef = useRef<HTMLInputElement>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+  const dragCounterRef = useRef(0);
+  const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
 
   // Close export dropdown on click outside
   useEffect(() => {
@@ -119,6 +138,30 @@ export const ExifRemoverView: React.FC = () => {
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [isExportDropdownOpen]);
+
+  const handlePageDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDraggingOverPage(true);
+    }
+  }, []);
+
+  const handlePageDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handlePageDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDraggingOverPage(false);
+    }
+  }, []);
 
   const handleFilesSelected = useCallback(async (newFiles: File[]) => {
     if (!newFiles || newFiles.length === 0) return;
@@ -146,23 +189,21 @@ export const ExifRemoverView: React.FC = () => {
 
     const supported = newFiles.filter(f => {
       const name = f.name.toLowerCase();
+      const type = f.type.toLowerCase();
+      const isMediaExtension = /\.(jpe?g|png|webp|avif|gif|bmp|tiff?|heic|heif|svg|ico|mp4|mov|webm|mkv|avi|m4v|wmv|flv|3gp|3g2|ts|mts|m2ts|ogv|f4v|vob|mpg|mpeg|asf|divx|m2v|mp3|m4a|wav|flac|ogg|oga|opus|aac|wma|aiff|alac|pdf)$/i.test(name);
       const isSupportedType =
-        f.type.startsWith('image/') ||
-        f.type.startsWith('video/') ||
-        f.type === 'application/pdf' ||
-        name.endsWith('.jpg') || name.endsWith('.jpeg') ||
-        name.endsWith('.png') || name.endsWith('.webp') ||
-        name.endsWith('.avif') || name.endsWith('.gif') ||
-        name.endsWith('.bmp') || name.endsWith('.tiff') ||
-        name.endsWith('.tif') || name.endsWith('.mp4') ||
-        name.endsWith('.mov') || name.endsWith('.pdf');
-      const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+        type.startsWith('image/') ||
+        type.startsWith('video/') ||
+        type.startsWith('audio/') ||
+        type === 'application/pdf' ||
+        isMediaExtension;
+      const MAX_SIZE = 4 * 1024 * 1024 * 1024; // 4 GB limit (supports long 4K & HD videos)
       if (!isSupportedType) {
-        validationErrors.push(`"${f.name}" is not a supported image, video, or PDF format.`);
+        validationErrors.push(`"${f.name}" is not a recognized media file format.`);
         return false;
       }
       if (f.size > MAX_SIZE) {
-        validationErrors.push(`"${f.name}" exceeds the 50 MB maximum size limit (${formatBytes(f.size)}).`);
+        validationErrors.push(`"${f.name}" exceeds the 4 GB maximum size limit (${formatBytes(f.size)}).`);
         return false;
       }
       return true;
@@ -279,6 +320,16 @@ export const ExifRemoverView: React.FC = () => {
     }, 280);
   }, [files.length, selectedId]);
 
+  const handlePageDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDraggingOverPage(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesSelected(Array.from(e.dataTransfer.files));
+    }
+  }, [handleFilesSelected]);
+
   const handleStrip = useCallback(async (id: string) => {
     const entry = files.find(f => f.id === id);
     if (!entry || entry.status === 'processing' || entry.status === 'done') return;
@@ -366,13 +417,39 @@ export const ExifRemoverView: React.FC = () => {
   const grouped = selected?.exif ? groupTagsByCategory(selected.exif.tags) : {};
 
   return (
-    <div className="space-y-6 sm:space-y-8 py-4 sm:py-6 max-w-6xl mx-auto px-3 sm:px-4">
+    <div
+      onDragEnter={handlePageDragEnter}
+      onDragOver={handlePageDragOver}
+      onDragLeave={handlePageDragLeave}
+      onDrop={handlePageDrop}
+      className="space-y-6 sm:space-y-8 py-4 sm:py-6 max-w-6xl mx-auto px-3 sm:px-4 relative"
+    >
+      {/* Full Window Drag Overlay */}
+      {isDraggingOverPage && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm border-4 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center p-6 m-4 pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl border border-rose-500/30 flex flex-col items-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/30">
+              <Video className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+              Drop Videos &amp; Media Files Here
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Add more files to the queue (up to 4 GB each)
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Hidden file input for Adding More Files */}
       <input
         ref={addMoreRef}
+        id="exif-add-more-input"
+        name="exifFiles"
         type="file"
         multiple
-        accept="image/*,video/mp4,video/quicktime,application/pdf,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tiff,.tif,.mp4,.mov,.pdf"
+        autoComplete="off"
+        accept={ALL_MEDIA_ACCEPT}
         className="hidden"
         onChange={e => {
           if (e.target.files && e.target.files.length > 0) {
@@ -392,35 +469,9 @@ export const ExifRemoverView: React.FC = () => {
             <span>{t('exif.title', 'EXIF & Metadata Remover')}</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t('exif.subtitle', 'View, export (HTML, CSV, JSON, TXT), and permanently strip hidden metadata, GPS, and device tags from images, videos & PDFs.')}
+            {t('exif.subtitle', 'View, export (HTML, CSV, JSON, TXT), and permanently strip hidden metadata, GPS, and device tags from images, videos, audio & documents.')}
           </p>
         </div>
-
-        {files.length > 0 && (
-          <div className="flex items-center space-x-2">
-            {files.length < 20 ? (
-              <button
-                onClick={() => addMoreRef.current?.click()}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-colors"
-                title="Add more files"
-              >
-                <FileBox className="w-4 h-4" />
-                <span>{t('exif.addMore', 'Add More')}</span>
-              </button>
-            ) : (
-              <span className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
-                Max Limit (20/20)
-              </span>
-            )}
-            <button
-              onClick={handleClearAll}
-              className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>{t('exif.clearQueue', 'Clear Queue')}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Main Upload Zone: Shown ONLY when NO files are loaded */}
@@ -428,12 +479,14 @@ export const ExifRemoverView: React.FC = () => {
         <div className="pt-4 max-w-2xl mx-auto w-full">
           <DropZone
             onFilesSelected={handleFilesSelected}
-            title={t('exif.dropTitle', 'Drop files here to inspect & clean')}
-            subtitle={t('exif.dropSubtitle', 'Images (JPEG, PNG, WebP, HEIC, GIF), Videos (MP4, MOV) & Documents (PDF)')}
+            title={t('exif.dropTitle', 'Drop media files here to inspect & clean')}
+            subtitle="Supports videos, audio, images & documents (MP4, MOV, WebM, MKV, MP3, WAV, JPG, PNG, PDF & more)"
             showUrlImport={false}
             allowVideosAndPdf={true}
-            accept="image/*,video/mp4,video/quicktime,application/pdf,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tiff,.tif,.mp4,.mov,.pdf"
-            formatBadges={['JPG', 'PNG', 'WebP', 'HEIC', 'GIF', 'AVIF', 'MP4', 'MOV', 'PDF']}
+            allowAllMedia={true}
+            buttonText="Choose Media Files"
+            formatBadges={['MP4/MOV', 'WebM/MKV', 'MP3/WAV', 'FLAC', 'JPG/PNG', 'PDF', 'HEIC/TIFF']}
+            accept={ALL_MEDIA_ACCEPT}
           />
         </div>
       )}
@@ -496,257 +549,340 @@ export const ExifRemoverView: React.FC = () => {
             </div>
           )}
 
-          {/* Action strip bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              {files.length} File{files.length !== 1 ? 's' : ''} Loaded • {doneCount} Cleaned
-            </span>
-            <div className="flex items-center space-x-2">
-              {readyCount > 0 && (
-                <button
-                  onClick={handleStripAll}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{t('exif.stripAll', 'Strip All')} ({readyCount})</span>
-                </button>
+          {/* MOBILE CONTROLS TOGGLE BAR (Visible on mobile screens) */}
+          <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2.5 min-w-0">
+              {selected && (
+                <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  {selected.fileKind === 'image' && (
+                    <img src={selected.previewUrl} alt={selected.file.name} className="w-full h-full object-cover" />
+                  )}
+                  {selected.fileKind === 'video' && <Video className="w-4 h-4 text-indigo-500" />}
+                  {selected.fileKind === 'pdf' && <FileText className="w-4 h-4 text-rose-500" />}
+                </div>
               )}
-              {doneCount > 1 && (
-                <button
-                  onClick={handleDownloadAll}
-                  disabled={isZipping}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all disabled:opacity-60"
-                >
-                  {isZipping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
-                  <span>{isZipping ? 'Zipping…' : t('exif.downloadAllZip', 'Download All ZIP')}</span>
-                </button>
-              )}
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                  {selected ? selected.file.name : 'No file selected'}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {selected?.status === 'done' ? '✓ Cleaned' : `${selected?.exif?.tags.length || 0} tags detected`}
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileListOpen((prev) => !prev)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0"
+            >
+              <Settings className="w-3.5 h-3.5 text-rose-500" />
+              <span>{isMobileListOpen ? 'Hide Files' : `Files (${files.length})`}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMobileListOpen ? 'rotate-180' : ''}`} />
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* File List Sidebar */}
-            <div className="lg:col-span-4 space-y-2">
-              {files.map(f => {
-                const isSelected = f.id === selectedId;
-                const hasGps = f.exif?.hasGps;
+          {/* TWO-COLUMN WORKSPACE: LEFT SMALL IMAGES LIST & RIGHT EXIF DETAILS */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* LEFT SIDEBAR: Small Images List */}
+            <div
+              className={`w-full lg:w-80 xl:w-96 shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4 ${
+                isMobileListOpen ? 'block' : 'hidden lg:flex'
+              }`}
+            >
+              <div className="space-y-4">
+                {/* Header Action Bar */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Files in Queue ({files.length})
+                    </span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {doneCount} Cleaned • {readyCount} Ready
+                    </span>
+                  </div>
 
-                return (
-                  <div
-                    key={f.id}
-                    onClick={() => setSelectedId(f.id)}
-                    className={`group relative flex items-center space-x-3 p-3 rounded-xl cursor-pointer border transition-all duration-150 ${isSelected
-                        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 dark:border-rose-700 shadow-sm'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                      }`}
-                  >
-                    {/* Thumbnail / Kind Icon */}
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      {f.fileKind === 'image' && (
-                        <img src={f.previewUrl} alt={f.file.name} className="w-full h-full object-cover" />
-                      )}
-                      {f.fileKind === 'video' && (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                          <Video className="w-6 h-6" />
-                          <span className="text-[9px] font-bold uppercase mt-0.5">Video</span>
-                        </div>
-                      )}
-                      {f.fileKind === 'pdf' && (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-                          <FileText className="w-6 h-6" />
-                          <span className="text-[9px] font-bold uppercase mt-0.5">PDF</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{f.file.name}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{formatBytes(f.file.size)}</span>
-                        {f.status === 'reading' && (
-                          <span className="inline-flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span>Reading…</span>
-                          </span>
-                        )}
-                        {f.status === 'processing' && (
-                          <span className="inline-flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span>Stripping…</span>
-                          </span>
-                        )}
-                        {f.status === 'done' && (
-                          <span className="inline-flex items-center space-x-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>Clean</span>
-                          </span>
-                        )}
-                        {f.status === 'error' && (
-                          <span className="inline-flex items-center space-x-1 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>Error</span>
-                          </span>
-                        )}
-                        {hasGps && f.status !== 'done' && (
-                          <span className="inline-flex items-center space-x-0.5 text-xs text-rose-600 dark:text-rose-400 font-bold">
-                            <MapPin className="w-3 h-3" />
-                            <span>GPS</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Remove button */}
+                  <div className="flex items-center space-x-1.5">
                     <button
-                      onClick={e => { e.stopPropagation(); handleRemove(f.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all"
-                      title="Remove"
+                      type="button"
+                      onClick={() => addMoreRef.current?.click()}
+                      title="Add More Files"
+                      className="p-2 sm:p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
-                      <X className="w-4 h-4" />
+                      <Plus className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearAll}
+                      title="Clear All Files"
+                      className="p-2 sm:p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
 
-            {/* Detail Panel */}
-            <div className="lg:col-span-8 space-y-5">
-              {selected ? (
-                <>
-                  {/* File preview + action row */}
-                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                    <div className="flex flex-col sm:flex-row gap-0">
-                      {/* Original Preview */}
-                      <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Original File
-                          </p>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
-                            {selected.fileKind}
-                          </span>
-                        </div>
-                        <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center p-2">
-                          {selected.fileKind === 'image' && (
-                            <img src={selected.previewUrl} alt="original" className="max-w-full max-h-full object-contain" />
+                {/* Quick Add Button / Drop Zone hint */}
+                <button
+                  type="button"
+                  onClick={() => addMoreRef.current?.click()}
+                  className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-rose-500 dark:hover:border-rose-500 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Add More Videos or Files</span>
+                </button>
+
+                {/* Small Images Scroll List */}
+                <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+                  {files.map((f) => {
+                    const isSelected = f.id === selectedId;
+                    const hasGps = f.exif?.hasGps;
+
+                    return (
+                      <div
+                        key={f.id}
+                        onClick={() => {
+                          setSelectedId(f.id);
+                          setIsMobileListOpen(false);
+                        }}
+                        className={`group relative flex items-center space-x-3 p-2.5 sm:p-3 rounded-xl cursor-pointer border transition-all duration-150 ${
+                          isSelected
+                            ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-500 ring-2 ring-rose-500/20 shadow-xs'
+                            : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        {/* Thumbnail */}
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          {f.fileKind === 'image' && (
+                            <img src={f.previewUrl} alt={f.file.name} className="w-full h-full object-cover" />
                           )}
-                          {selected.fileKind === 'video' && (
-                            <video src={selected.previewUrl} controls className="max-w-full max-h-full rounded-lg" />
+                          {f.fileKind === 'video' && (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                              <Video className="w-5 h-5" />
+                              <span className="text-[8px] font-bold uppercase mt-0.5">Video</span>
+                            </div>
                           )}
-                          {selected.fileKind === 'pdf' && (
-                            <div className="flex flex-col items-center justify-center text-center p-4">
-                              <FileText className="w-12 h-12 text-rose-500 mb-2" />
-                              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{selected.file.name}</span>
-                              <span className="text-[11px] text-slate-400 mt-0.5">PDF Document</span>
+                          {f.fileKind === 'audio' && (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                              <Music className="w-5 h-5" />
+                              <span className="text-[8px] font-bold uppercase mt-0.5">Audio</span>
+                            </div>
+                          )}
+                          {f.fileKind === 'pdf' && (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                              <FileText className="w-5 h-5" />
+                              <span className="text-[8px] font-bold uppercase mt-0.5">PDF</span>
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">{formatBytes(selected.file.size)}</p>
-                      </div>
 
-                      {/* Cleaned Result Preview */}
-                      {selected.result && (
-                        <div className="flex-1 p-4">
-                          <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Cleaned ✓</p>
-                          <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center p-2">
-                            {selected.fileKind === 'image' && (
-                              <img src={selected.result.previewUrl} alt="cleaned" className="max-w-full max-h-full object-contain" />
+                        {/* File Details */}
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate" title={f.file.name}>
+                            {f.file.name}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                              {formatBytes(f.file.size)}
+                            </span>
+                            {f.status === 'reading' && (
+                              <span className="inline-flex items-center space-x-1 text-[10px] text-blue-600 dark:text-blue-400 font-semibold">
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                <span>Reading…</span>
+                              </span>
                             )}
-                            {selected.fileKind === 'video' && (
-                              <video src={selected.result.previewUrl} controls className="max-w-full max-h-full rounded-lg" />
+                            {f.status === 'processing' && (
+                              <span className="inline-flex items-center space-x-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                <span>Stripping…</span>
+                              </span>
                             )}
-                            {selected.fileKind === 'pdf' && (
-                              <div className="flex flex-col items-center justify-center text-center p-4">
-                                <ShieldCheck className="w-12 h-12 text-emerald-500 mb-2" />
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Metadata Stripped PDF</span>
-                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">Ready to download</span>
-                              </div>
+                            {f.status === 'done' && (
+                              <span className="inline-flex items-center space-x-0.5 text-[10px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold rounded">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                <span>Clean</span>
+                              </span>
+                            )}
+                            {f.status === 'error' && (
+                              <span className="inline-flex items-center space-x-0.5 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                <span>Error</span>
+                              </span>
+                            )}
+                            {hasGps && f.status !== 'done' && (
+                              <span className="inline-flex items-center space-x-0.5 text-[10px] px-1.5 py-0.2 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold rounded">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span>GPS</span>
+                              </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">{formatBytes(selected.result.cleanedSizeBytes)}</p>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Actions bar */}
-                    <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-2">
-                      {selected.status === 'ready' && (
+                        {/* Remove button */}
                         <button
-                          onClick={() => handleStrip(selected.id)}
-                          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemove(f.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all cursor-pointer"
+                          title="Remove file"
                         >
-                          <ExifIcon className="w-4 h-4" />
-                          <span>Strip Metadata</span>
+                          <X className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                      {selected.status === 'processing' && (
-                        <div className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Stripping metadata…</span>
-                        </div>
-                      )}
-                      {selected.status === 'done' && selected.result && (
-                        <button
-                          onClick={() => handleDownload(selected)}
-                          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>{t('exif.downloadClean', 'Download Clean File')}</span>
-                        </button>
-                      )}
-                      {selected.status === 'error' && (
-                        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60">
-                          <AlertTriangle className="w-4 h-4" />
-                          <span>{selected.error || 'Processing failed'}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  {/* EXIF Metadata Panel */}
-                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 gap-3">
-                      <div className="flex items-center space-x-2">
-                        <Tag className="w-5 h-5 text-slate-500" />
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                          Detected Metadata
-                        </h2>
-                        {selected.exif && selected.exif.tags.length > 0 && (
-                          <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
-                            {selected.exif.tags.length} tags
-                          </span>
-                        )}
+              {/* Bottom Sidebar Batch Action Buttons (Unified with other tools) */}
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
+                <button
+                  type="button"
+                  onClick={handleStripAll}
+                  disabled={isStrippingAll || readyCount === 0}
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl text-base font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-md hover:shadow-lg shadow-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-98 cursor-pointer group"
+                >
+                  {isStrippingAll ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Clearing ({stripProgress.current}/{stripProgress.total})...</span>
+                    </>
+                  ) : (
+                    <span>Clear All Metadata {readyCount > 0 ? `(${readyCount})` : ''}</span>
+                  )}
+                </button>
+
+                {doneCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadAll}
+                    disabled={isZipping}
+                    className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all active:scale-98 cursor-pointer"
+                  >
+                    {isZipping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
+                    <span>{isZipping ? 'Zipping...' : `${t('exif.downloadAllZip', 'Download All as ZIP')} (${doneCount})`}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT WORKSPACE: EXIF Details & Metadata Panel (NO PICTURE PREVIEW BOX) */}
+            <div className="flex-1 w-full space-y-4 pb-20 lg:pb-0">
+              {selected ? (
+                <>
+                  {/* Selected File Top Header Card */}
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      {/* Left: Thumbnail pill + Filename + Info */}
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                          {selected.fileKind === 'image' && (
+                            <img src={selected.previewUrl} alt={selected.file.name} className="w-full h-full object-cover" />
+                          )}
+                          {selected.fileKind === 'video' && <Video className="w-6 h-6 text-indigo-500" />}
+                          {selected.fileKind === 'audio' && <Music className="w-6 h-6 text-emerald-500" />}
+                          {selected.fileKind === 'pdf' && <FileText className="w-6 h-6 text-rose-500" />}
+                        </div>
+
+                        <div className="min-w-0">
+                          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate" title={selected.file.name}>
+                            {selected.file.name}
+                          </h2>
+                          <div className="flex items-center space-x-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                            <span className="font-mono font-semibold uppercase">{selected.fileKind}</span>
+                            <span>•</span>
+                            <span className="font-mono">{formatBytes(selected.file.size)}</span>
+                            <span>•</span>
+                            {selected.status === 'done' ? (
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Cleaned</span>
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-rose-600 dark:text-rose-400">
+                                {selected.exif?.tags.length || 0} Tags Detected
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Export Dropdown + Show IDs toggle */}
-                      <div className="flex items-center space-x-2">
+                      {/* Right: Actions (Clear/Strip, Show IDs, Download, Export) */}
+                      <div className="flex items-center space-x-2 flex-wrap self-end sm:self-center">
+                        {selected.status === 'ready' && (
+                          <button
+                            type="button"
+                            onClick={() => handleStrip(selected.id)}
+                            className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer active:scale-95"
+                          >
+                            <span>Clear</span>
+                          </button>
+                        )}
+
+                        {selected.status === 'processing' && (
+                          <div className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Clearing...</span>
+                          </div>
+                        )}
+
+                        {selected.status === 'done' && selected.result && (
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(selected)}
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer active:scale-95"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download Clean File</span>
+                          </button>
+                        )}
+
+                        {/* Show / Hide Raw Tag IDs button aligned right beside the Clear CTA */}
+                        {selected.exif && selected.exif.tags.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowRawTags(!showRawTags)}
+                            className="inline-flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            title={showRawTags ? 'Hide EXIF Tag IDs' : 'Show EXIF Tag IDs'}
+                          >
+                            {showRawTags ? <EyeOff className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" /> : <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
+                            <span>{showRawTags ? 'Hide IDs' : 'Show IDs'}</span>
+                          </button>
+                        )}
+
+                        {/* Export EXIF Dropdown */}
                         {selected.exif && selected.exif.tags.length > 0 && (
                           <div className="relative" ref={exportDropdownRef}>
                             <button
                               type="button"
                               onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                              className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                             >
                               <Download className="w-3.5 h-3.5" />
-                              <span>{t('exif.exportExif', 'Export EXIF')}</span>
+                              <span>Export EXIF</span>
                               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {isExportDropdownOpen && (
-                              <div className="absolute right-0 top-full mt-1.5 w-52 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100 text-left">
+                              <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100 text-left">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     exportExifToHtml(selected.file.name, selected.exif!);
                                     setIsExportDropdownOpen(false);
                                   }}
-                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-slate-700 transition-colors"
+                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer group text-left"
                                 >
                                   <FileCode className="w-4 h-4 text-orange-500 shrink-0" />
-                                  <div className="flex flex-col text-left">
-                                    <span>Export as HTML (.html)</span>
-                                    <span className="text-[10px] text-slate-400 font-normal">Styled visual report</span>
+                                  <div className="flex flex-col text-left min-w-0">
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                      Export as HTML (.html)
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-normal">
+                                      Styled visual report
+                                    </span>
                                   </div>
                                 </button>
                                 <button
@@ -755,12 +891,16 @@ export const ExifRemoverView: React.FC = () => {
                                     exportExifToCsv(selected.file.name, selected.exif!);
                                     setIsExportDropdownOpen(false);
                                   }}
-                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-slate-700 transition-colors"
+                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer group text-left"
                                 >
                                   <FileSpreadsheet className="w-4 h-4 text-emerald-500 shrink-0" />
-                                  <div className="flex flex-col text-left">
-                                    <span>Export as CSV (.csv)</span>
-                                    <span className="text-[10px] text-slate-400 font-normal">Spreadsheet table</span>
+                                  <div className="flex flex-col text-left min-w-0">
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                      Export as CSV (.csv)
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-normal">
+                                      Spreadsheet table
+                                    </span>
                                   </div>
                                 </button>
                                 <button
@@ -769,12 +909,16 @@ export const ExifRemoverView: React.FC = () => {
                                     exportExifToJson(selected.file.name, selected.exif!);
                                     setIsExportDropdownOpen(false);
                                   }}
-                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-slate-700 transition-colors"
+                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer group text-left"
                                 >
                                   <Code2 className="w-4 h-4 text-blue-500 shrink-0" />
-                                  <div className="flex flex-col text-left">
-                                    <span>Export as JSON (.json)</span>
-                                    <span className="text-[10px] text-slate-400 font-normal">Raw programmatic data</span>
+                                  <div className="flex flex-col text-left min-w-0">
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                      Export as JSON (.json)
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-normal">
+                                      Raw programmatic data
+                                    </span>
                                   </div>
                                 </button>
                                 <button
@@ -783,168 +927,252 @@ export const ExifRemoverView: React.FC = () => {
                                     exportExifToTxt(selected.file.name, selected.exif!);
                                     setIsExportDropdownOpen(false);
                                   }}
-                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-slate-700 transition-colors"
+                                  className="w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer group text-left"
                                 >
-                                  <FileText className="w-4 h-4 text-slate-500 shrink-0" />
-                                  <div className="flex flex-col text-left">
-                                    <span>Export as TXT (.txt)</span>
-                                    <span className="text-[10px] text-slate-400 font-normal">Plain text report</span>
+                                  <FileText className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
+                                  <div className="flex flex-col text-left min-w-0">
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-slate-700 dark:group-hover:text-white transition-colors">
+                                      Export as TXT (.txt)
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-normal">
+                                      Plain text report
+                                    </span>
                                   </div>
                                 </button>
                               </div>
                             )}
                           </div>
                         )}
-
-                        {selected.exif && selected.exif.tags.length > 0 && (
-                          <button
-                            onClick={() => setShowRawTags(!showRawTags)}
-                            className="inline-flex items-center space-x-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors px-2 py-1.5"
-                          >
-                            {showRawTags ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            <span>{showRawTags ? 'Hide IDs' : 'Show IDs'}</span>
-                          </button>
-                        )}
                       </div>
-                    </div>
-
-                    <div className="p-4">
-                      {selected.status === 'reading' && (
-                        <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 py-4">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span className="text-sm">Reading metadata…</span>
-                        </div>
-                      )}
-
-                      {(selected.status === 'ready' || selected.status === 'processing' || selected.status === 'done' || selected.status === 'error') && (
-                        <>
-                          {(!selected.exif || selected.exif.tags.length === 0) && (
-                            <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
-                              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center">
-                                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                              </div>
-                              <p className="font-bold text-slate-900 dark:text-white">No Metadata Tags Found</p>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                                This {selected.fileKind} has no detectable EXIF or container metadata embedded, or it was already scrubbed.
-                              </p>
-                            </div>
-                          )}
-
-                          {selected.exif && selected.exif.tags.length > 0 && (
-                            <div className="space-y-3">
-                              {/* Summary badges */}
-                              <div className="flex flex-wrap gap-2 pb-2">
-                                {selected.exif.hasGps && (
-                                  <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span>GPS Location Embedded!</span>
-                                  </div>
-                                )}
-                                {selected.exif.hasCamera && (
-                                  <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
-                                    <Camera className="w-3.5 h-3.5" />
-                                    <span>Camera Data</span>
-                                  </div>
-                                )}
-                                {selected.exif.hasSoftware && (
-                                  <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50">
-                                    <Code2 className="w-3.5 h-3.5" />
-                                    <span>Software / Author Info</span>
-                                  </div>
-                                )}
-                                {selected.exif.rawSize > 0 && (
-                                  <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                    <span>~{formatBytes(selected.exif.rawSize)} metadata block</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Grouped tags */}
-                              {Object.entries(grouped).map(([category, catTags]) => {
-                                const cfg = CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG] || CATEGORY_CONFIG.other;
-                                const Icon = cfg.icon;
-                                const isCollapsed = collapsedCategories.has(category);
-
-                                return (
-                                  <div key={category} className={`rounded-xl border overflow-hidden ${cfg.border}`}>
-                                    <button
-                                      onClick={() => toggleCategory(category)}
-                                      className={`w-full flex items-center justify-between px-4 py-2.5 ${cfg.bg}`}
-                                    >
-                                      <div className="flex items-center space-x-2">
-                                        <Icon className={`w-4 h-4 ${cfg.color}`} />
-                                        <span className={`text-xs font-bold uppercase tracking-wider ${cfg.color}`}>
-                                          {cfg.label}
-                                        </span>
-                                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
-                                          {catTags.length}
-                                        </span>
-                                      </div>
-                                      {isCollapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
-                                    </button>
-
-                                    {!isCollapsed && (
-                                      <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {catTags.map((tag, i) => (
-                                          <div key={i} className="flex items-start justify-between px-4 py-2.5 gap-3">
-                                            <div className="min-w-0">
-                                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                                {tag.label}
-                                              </span>
-                                              {showRawTags && (
-                                                <span className="ml-2 text-xs font-mono text-slate-400 dark:text-slate-500">{tag.tag}</span>
-                                              )}
-                                            </div>
-                                            <span className="text-xs font-mono text-slate-600 dark:text-slate-400 text-right max-w-[55%] break-all">
-                                              {tag.value}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </>
-                      )}
                     </div>
                   </div>
 
-                  {/* Done: confirmation card */}
-                  {selected.status === 'done' && selected.result && (
-                    <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 p-5">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        <h3 className="font-bold text-emerald-900 dark:text-emerald-300">Metadata Successfully Removed</h3>
+                  {/* Interactive Media Player Preview for Video & Audio */}
+                  {selected.fileKind === 'video' && (
+                    <div className="bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 p-2 sm:p-3 shadow-xs flex flex-col items-center justify-center">
+                      <video
+                        key={selected.result?.previewUrl || selected.previewUrl}
+                        controls
+                        preload="metadata"
+                        className="max-h-64 w-full rounded-xl object-contain bg-black"
+                        src={selected.result?.previewUrl || selected.previewUrl}
+                      />
+                    </div>
+                  )}
+
+                  {selected.fileKind === 'audio' && (
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+                      <div className="flex items-center space-x-2 mb-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <Music className="w-4 h-4 text-emerald-500" />
+                        <span>Audio Playback & Preview</span>
                       </div>
+                      <audio controls className="w-full h-11" src={selected.previewUrl} />
+                    </div>
+                  )}
+
+                  {/* Cleaned Result Alert Card (If Done) */}
+                  {selected.status === 'done' && selected.result && (
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 p-4 sm:p-5 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                          <h3 className="font-bold text-emerald-900 dark:text-emerald-300 text-sm sm:text-base">
+                            Metadata Successfully Stripped & Cleaned
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(selected)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1 shadow-sm transition-all"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download</span>
+                        </button>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-3 text-center">
-                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 border border-emerald-200 dark:border-emerald-900/50">
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Original</p>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{formatBytes(selected.result.originalSizeBytes)}</p>
+                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-2.5 sm:p-3 border border-emerald-200 dark:border-emerald-900/50">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">Original Size</p>
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-mono">{formatBytes(selected.result.originalSizeBytes)}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 border border-emerald-200 dark:border-emerald-900/50">
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Cleaned</p>
-                          <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatBytes(selected.result.cleanedSizeBytes)}</p>
+                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-2.5 sm:p-3 border border-emerald-200 dark:border-emerald-900/50">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">Cleaned Size</p>
+                          <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{formatBytes(selected.result.cleanedSizeBytes)}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 border border-emerald-200 dark:border-emerald-900/50">
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Tags Stripped</p>
-                          <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{selected.exif?.tags.length ?? 0}</p>
+                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-2.5 sm:p-3 border border-emerald-200 dark:border-emerald-900/50">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">Tags Stripped</p>
+                          <p className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">{selected.exif?.tags.length ?? 0}</p>
                         </div>
                       </div>
                     </div>
                   )}
+
+                  {/* EXIF Metadata Card & Categorized Sections */}
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="w-4 h-4 text-rose-500" />
+                        <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+                          Media EXIF & Container Metadata
+                        </h3>
+                      </div>
+                      {selected.exif && selected.exif.tags.length > 0 && (
+                        <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+                          {selected.exif.tags.length} attributes found
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="p-4 sm:p-5 space-y-4">
+                      {selected.status === 'reading' && (
+                        <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 py-6 justify-center">
+                          <Loader2 className="w-5 h-5 animate-spin text-rose-500" />
+                          <span className="text-sm font-semibold">Reading metadata from file…</span>
+                        </div>
+                      )}
+
+                      {selected.status !== 'reading' && (!selected.exif || selected.exif.tags.length === 0) && (
+                        <div className="flex flex-col items-center justify-center py-10 text-center space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                          </div>
+                          <p className="font-bold text-slate-900 dark:text-white">No Metadata Tags Found</p>
+                          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                            This {selected.fileKind} has no detectable EXIF or container metadata embedded, or it was already scrubbed.
+                          </p>
+                        </div>
+                      )}
+
+                      {selected.exif && selected.exif.tags.length > 0 && (
+                        <div className="space-y-4">
+                          {/* Summary badges */}
+                          <div className="flex flex-wrap gap-2 pb-1">
+                            {selected.exif.hasGps && (
+                              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span>GPS Coordinates Embedded!</span>
+                              </div>
+                            )}
+                            {selected.exif.hasCamera && (
+                              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
+                                <Camera className="w-3.5 h-3.5" />
+                                <span>Camera Hardware Specs</span>
+                              </div>
+                            )}
+                            {selected.exif.hasSoftware && (
+                              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50">
+                                <Code2 className="w-3.5 h-3.5" />
+                                <span>Software / Editor Info</span>
+                              </div>
+                            )}
+                            {selected.exif.rawSize > 0 && (
+                              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                <span>~{formatBytes(selected.exif.rawSize)} metadata block</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Grouped tags accordions */}
+                          {Object.entries(grouped).map(([category, catTags]) => {
+                            const cfg = CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG] || CATEGORY_CONFIG.other;
+                            const Icon = cfg.icon;
+                            const isCollapsed = collapsedCategories.has(category);
+
+                            return (
+                              <div key={category} className={`rounded-xl border overflow-hidden ${cfg.border}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleCategory(category)}
+                                  className={`w-full flex items-center justify-between px-4 py-2.5 ${cfg.bg} cursor-pointer`}
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <Icon className={`w-4 h-4 ${cfg.color}`} />
+                                    <span className={`text-xs font-bold uppercase tracking-wider ${cfg.color}`}>
+                                      {cfg.label}
+                                    </span>
+                                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
+                                      {catTags.length}
+                                    </span>
+                                  </div>
+                                  {isCollapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
+                                </button>
+
+                                {!isCollapsed && (
+                                  <div className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                    {catTags.map((tag, i) => (
+                                      <div key={i} className="flex items-start justify-between px-4 py-2.5 gap-3">
+                                        <div className="min-w-0">
+                                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {tag.label}
+                                          </span>
+                                          {showRawTags && (
+                                            <span className="ml-2 text-xs font-mono text-slate-400 dark:text-slate-500">{tag.tag}</span>
+                                          )}
+                                        </div>
+                                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400 text-right max-w-[55%] break-all">
+                                          {tag.value}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-64 text-center">
+                <div className="flex items-center justify-center h-64 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                   <div className="space-y-2">
                     <ExifIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Select a file to inspect its metadata</p>
+                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Select an image from the left queue to view its EXIF details</p>
                   </div>
                 </div>
               )}
             </div>
+          </div>
+
+          {/* MOBILE STICKY BOTTOM ACTION BAR */}
+          <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 p-3 z-30 shadow-2xl backdrop-blur-md flex items-center justify-between gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsMobileListOpen((prev) => !prev)}
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center space-x-1.5 text-xs font-bold active:scale-95"
+            >
+              <Settings className="w-4 h-4 text-rose-500" />
+              <span>Queue ({files.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleStripAll}
+              disabled={isStrippingAll || readyCount === 0}
+              className="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-500/20 disabled:opacity-50 transition-all active:scale-98 flex items-center justify-center space-x-2"
+            >
+              {isStrippingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  <span>Clearing ({stripProgress.current}/{stripProgress.total})...</span>
+                </>
+              ) : (
+                <span>Clear All {readyCount > 0 ? `(${readyCount})` : ''}</span>
+              )}
+            </button>
+
+            {doneCount > 0 && (
+              <button
+                type="button"
+                onClick={handleDownloadAll}
+                disabled={isZipping}
+                className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center shadow-md shadow-emerald-500/20 active:scale-95"
+                title="Download ZIP"
+              >
+                <Archive className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1113,7 +1341,7 @@ export const ExifRemoverView: React.FC = () => {
                         Drop them in
                       </h4>
                       <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        Drag and drop or click <strong className="text-slate-900 dark:text-white">Select Files</strong> (process up to 20 files at once, up to 50MB each).
+                        Drag and drop or click <strong className="text-slate-900 dark:text-white">Select Files</strong> (process up to 20 files at once, up to 4 GB each, supports long 4K/HD videos).
                       </p>
                     </div>
                   </div>
@@ -1203,8 +1431,19 @@ export const ExifRemoverView: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Videos</span>
-                      <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">MP4, MOV</h4>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">Strips QuickTime udta user metadata, recording dates, GPS, and device serials.</p>
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">MP4, MOV, WebM, MKV, AVI, M4V, 3GP</h4>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">Strips ISO BMFF udta atoms, EBML tags, RIFF INFO chunks, creation dates, GPS, and device serials.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm">
+                      <Music className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2]" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Audio</span>
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">MP3, WAV, FLAC, M4A, OGG</h4>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">Removes ID3v1/ID3v2 tags, Vorbis comment blocks, encoder signatures, and artist metadata.</p>
                     </div>
                   </div>
 
@@ -1379,7 +1618,7 @@ export const ExifRemoverView: React.FC = () => {
                 {/* Usage Instructions */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl transition-colors duration-150">
                   <h4 className="font-mono font-bold text-sm text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
-                    Usage Instructions (Max 20 files, 50MB each)
+                    Usage Instructions (Max 20 files, up to 4 GB each)
                   </h4>
                   <ol className="space-y-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-mono">
                     <li className="flex items-start space-x-2.5">

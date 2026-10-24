@@ -1,7 +1,7 @@
 /**
  * Pure Client-Side High-Efficiency PNG Encoder & Compressor
  * Bridges the gap between 32-bit lossless Canvas bloat and efficient web PNG delivery.
- * Solves the issue where JPEG/WebP images balloon in file size when converted to PNG.
+ * Solves color banding and posterization artifacts using Floyd-Steinberg error diffusion dithering.
  */
 
 export interface PngEncodeResult {
@@ -11,89 +11,90 @@ export interface PngEncodeResult {
 }
 
 /**
- * Optimizes ImageData pixels by applying block noise-reduction smoothing and color step quantization.
- * Enables DEFLATE to find long repeating byte sequences across scanlines, drastically reducing file size.
+ * Applies smooth Floyd-Steinberg error diffusion dithering.
+ * NEVER averages blocks (block size is 1) to eliminate all mosaic, posterization, and contour banding.
+ * Distributes subtle color quantization error to neighboring pixels to preserve smooth gradients.
  */
-function applyPngQuantizationAndSmoothing(
+function applyPngFloydSteinbergDither(
   imageData: ImageData,
-  quality: number,
-  originalSizeBytes?: number
+  quality: number
 ): void {
   const width = imageData.width;
   const height = imageData.height;
   const data = imageData.data;
 
-  // Calculate quantization step based on quality and original size ratio
-  // At quality 0.85: step is ~10-14
-  // At quality 0.50: step is ~26-30
-  const qFactor = Math.max(0.1, Math.min(0.95, quality));
-  let step = Math.max(8, Math.round((1 - qFactor) * 52));
+  // Gentle quantization step:
+  // quality 0.90 -> step 2
+  // quality 0.75 -> step 4
+  // quality 0.50 -> step 6
+  // min quality -> step 8
+  const qFactor = Math.max(0.1, Math.min(1.0, quality));
+  const step = Math.max(1, Math.round((1 - qFactor) * 8));
 
-  if (originalSizeBytes && originalSizeBytes < 300 * 1024 && quality < 0.90) {
-    step = Math.max(step, 14);
-  }
+  // If step is 1, image remains 100% untouched and lossless
+  if (step <= 1) return;
 
-  // Determine spatial block size: 2x2 for normal/medium, 4x4 for high-res images (>2400px)
-  const maxDim = Math.max(width, height);
-  const blockSize = maxDim >= 2400 ? 4 : 2;
+  // Error buffers for Floyd-Steinberg diffusion (curErrors & nextErrors for RGB)
+  const errWidth = width + 2;
+  let curErrors = new Float32Array(errWidth * 3);
+  let nextErrors = new Float32Array(errWidth * 3);
 
-  for (let y = 0; y <= height - blockSize; y += blockSize) {
-    for (let x = 0; x <= width - blockSize; x += blockSize) {
-      let sumR = 0;
-      let sumG = 0;
-      let sumB = 0;
-      let count = 0;
-      let hasAlpha = false;
+  for (let y = 0; y < height; y++) {
+    nextErrors.fill(0);
 
-      for (let dy = 0; dy < blockSize; dy++) {
-        const rowOffset = (y + dy) * width;
-        for (let dx = 0; dx < blockSize; dx++) {
-          const idx = (rowOffset + (x + dx)) * 4;
-          const a = data[idx + 3];
-          if (a < 220) hasAlpha = true;
-          sumR += data[idx];
-          sumG += data[idx + 1];
-          sumB += data[idx + 2];
-          count++;
-        }
-      }
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const a = data[idx + 3];
 
-      if (count === 0) continue;
+      // Preserve full transparency and near-transparent pixels identically
+      if (a < 16) continue;
 
-      // If block contains transparency, quantize pixels individually to prevent edge halos
-      if (hasAlpha) {
-        for (let dy = 0; dy < blockSize; dy++) {
-          const rowOffset = (y + dy) * width;
-          for (let dx = 0; dx < blockSize; dx++) {
-            const idx = (rowOffset + (x + dx)) * 4;
-            if (data[idx + 3] >= 32) {
-              data[idx] = Math.min(255, Math.round(data[idx] / step) * step);
-              data[idx + 1] = Math.min(255, Math.round(data[idx + 1] / step) * step);
-              data[idx + 2] = Math.min(255, Math.round(data[idx + 2] / step) * step);
-            }
-          }
-        }
-        continue;
-      }
+      const errIdx = (x + 1) * 3;
+      const oldR = data[idx] + curErrors[errIdx];
+      const oldG = data[idx + 1] + curErrors[errIdx + 1];
+      const oldB = data[idx + 2] + curErrors[errIdx + 2];
 
-      // Compute averaged color for the block rounded to step
-      const avgR = Math.min(255, Math.round((sumR / count) / step) * step);
-      const avgG = Math.min(255, Math.round((sumG / count) / step) * step);
-      const avgB = Math.min(255, Math.round((sumB / count) / step) * step);
-      const avgA = 255;
+      // Quantize to nearest step
+      const newR = Math.min(255, Math.max(0, Math.round(oldR / step) * step));
+      const newG = Math.min(255, Math.max(0, Math.round(oldG / step) * step));
+      const newB = Math.min(255, Math.max(0, Math.round(oldB / step) * step));
 
-      // Fill block with smoothed color
-      for (let dy = 0; dy < blockSize; dy++) {
-        const rowOffset = (y + dy) * width;
-        for (let dx = 0; dx < blockSize; dx++) {
-          const idx = (rowOffset + (x + dx)) * 4;
-          data[idx] = avgR;
-          data[idx + 1] = avgG;
-          data[idx + 2] = avgB;
-          data[idx + 3] = avgA;
-        }
-      }
+      data[idx] = newR;
+      data[idx + 1] = newG;
+      data[idx + 2] = newB;
+
+      // Quantization error
+      const errR = oldR - newR;
+      const errG = oldG - newG;
+      const errB = oldB - newB;
+
+      // Diffuse to neighbors:
+      // (x + 1, y): 7/16
+      curErrors[errIdx + 3] += (errR * 7) / 16;
+      curErrors[errIdx + 4] += (errG * 7) / 16;
+      curErrors[errIdx + 5] += (errB * 7) / 16;
+
+      // (x - 1, y + 1): 3/16
+      const nextLeft = x * 3;
+      nextErrors[nextLeft] += (errR * 3) / 16;
+      nextErrors[nextLeft + 1] += (errG * 3) / 16;
+      nextErrors[nextLeft + 2] += (errB * 3) / 16;
+
+      // (x, y + 1): 5/16
+      nextErrors[errIdx] += (errR * 5) / 16;
+      nextErrors[errIdx + 1] += (errG * 5) / 16;
+      nextErrors[errIdx + 2] += (errB * 5) / 16;
+
+      // (x + 1, y + 1): 1/16
+      nextErrors[errIdx + 3] += (errR * 1) / 16;
+      nextErrors[errIdx + 4] += (errG * 1) / 16;
+      nextErrors[errIdx + 5] += (errB * 1) / 16;
     }
+
+    // Swap error buffers
+    const temp = curErrors;
+    curErrors = nextErrors;
+    nextErrors = temp;
   }
 }
 
@@ -110,9 +111,7 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 /**
- * Master PNG Encoder that applies intelligent compression based on quality and size constraints.
- * Guarantees that images converted to PNG at Target Quality < 98% will adhere to the target size budget
- * and will not balloon into oversized files.
+ * Master PNG Encoder that guarantees high visual fidelity without banding or posterization artifacts.
  */
 export async function encodeCanvasToPng(
   canvas: HTMLCanvasElement,
@@ -123,8 +122,8 @@ export async function encodeCanvasToPng(
   const origW = canvas.width;
   const origH = canvas.height;
 
-  // 1. If 100% lossless is explicitly chosen, use standard browser canvas PNG directly
-  if (quality >= 0.98 && !targetSizeBytes) {
+  // 1. If high quality is chosen and no target size limit is set, use lossless canvas PNG directly
+  if (quality >= 0.90 && !targetSizeBytes) {
     const rawBlob = await canvasToPngBlob(canvas);
     return {
       blob: rawBlob,
@@ -133,22 +132,20 @@ export async function encodeCanvasToPng(
     };
   }
 
-  // 2. Determine target size budget
+  // 2. Determine target size budget if applicable
   let maxAllowedBytes: number | undefined = targetSizeBytes;
-  if (!maxAllowedBytes && originalSizeBytes) {
-    // Proportional target budget based on quality slider (e.g. 85% -> 85% of original size)
-    const ratio = Math.min(0.95, Math.max(0.15, quality));
+  if (!maxAllowedBytes && originalSizeBytes && quality < 0.85) {
+    const ratio = Math.min(0.95, Math.max(0.20, quality));
     maxAllowedBytes = Math.round(originalSizeBytes * ratio);
   }
 
   // 3. Pre-scale if dimensions are huge compared to maxAllowedBytes
-  // In quantized PNG, photographic density is ~0.24 - 0.32 bytes per pixel
   let currentW = origW;
   let currentH = origH;
   const totalPixels = origW * origH;
 
   if (maxAllowedBytes) {
-    const estimatedDensity = Math.max(0.22, 0.16 + quality * 0.16);
+    const estimatedDensity = Math.max(0.30, 0.20 + quality * 0.20);
     const estimatedBytes = totalPixels * estimatedDensity;
     if (estimatedBytes > maxAllowedBytes) {
       const targetScale = Math.min(0.96, Math.sqrt(maxAllowedBytes / estimatedBytes));
@@ -157,8 +154,14 @@ export async function encodeCanvasToPng(
     }
   }
 
-  // Helper to render canvas at specific dimensions with quantization
+  // Helper to render canvas with smooth bicubic scaling and Floyd-Steinberg dithering
   const renderOptimized = async (w: number, h: number, q: number): Promise<{ blob: Blob; w: number; h: number }> => {
+    // If dimensions match original and quality is high, take direct blob
+    if (w === origW && h === origH && q >= 0.90) {
+      const blob = await canvasToPngBlob(canvas);
+      return { blob, w: origW, h: origH };
+    }
+
     const optCanvas = document.createElement('canvas');
     optCanvas.width = w;
     optCanvas.height = h;
@@ -172,9 +175,11 @@ export async function encodeCanvasToPng(
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(canvas, 0, 0, w, h);
 
-    const imgData = ctx.getImageData(0, 0, w, h);
-    applyPngQuantizationAndSmoothing(imgData, q, originalSizeBytes);
-    ctx.putImageData(imgData, 0, 0);
+    if (q < 0.90) {
+      const imgData = ctx.getImageData(0, 0, w, h);
+      applyPngFloydSteinbergDither(imgData, q);
+      ctx.putImageData(imgData, 0, 0);
+    }
 
     const blob = await canvasToPngBlob(optCanvas);
     return { blob, w, h };
@@ -182,25 +187,14 @@ export async function encodeCanvasToPng(
 
   let best = await renderOptimized(currentW, currentH, quality);
 
-  // 4. If maxAllowedBytes is specified and blob is still larger than maxAllowedBytes, do corrective passes
+  // 4. Corrective scaling passes if target size was strictly requested and still exceeded
   if (maxAllowedBytes && best.blob.size > maxAllowedBytes) {
     const correctionScale = Math.min(0.92, Math.sqrt(maxAllowedBytes / best.blob.size) * 0.98);
     const correctedW = Math.max(1, Math.round(best.w * correctionScale));
     const correctedH = Math.max(1, Math.round(best.h * correctionScale));
-    const corrected = await renderOptimized(correctedW, correctedH, Math.max(0.1, quality - 0.05));
+    const corrected = await renderOptimized(correctedW, correctedH, quality);
     if (corrected.blob.size < best.blob.size) {
       best = corrected;
-    }
-
-    // Secondary fine check if still slightly above budget
-    if (best.blob.size > maxAllowedBytes) {
-      const finalScale = Math.min(0.92, Math.sqrt(maxAllowedBytes / best.blob.size) * 0.96);
-      const finalW = Math.max(1, Math.round(best.w * finalScale));
-      const finalH = Math.max(1, Math.round(best.h * finalScale));
-      const finalPass = await renderOptimized(finalW, finalH, Math.max(0.1, quality - 0.10));
-      if (finalPass.blob.size < best.blob.size) {
-        best = finalPass;
-      }
     }
   }
 

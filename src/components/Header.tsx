@@ -90,7 +90,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action: Language Switcher & Theme Toggle */}
           <div className="flex items-center space-x-2">
-            <LanguageSwitcher />
+            <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
 
             <button
               onClick={toggleTheme}
@@ -131,6 +133,12 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             );
           })}
+
+          {/* Mobile Language Switcher Row */}
+          <div className="pt-3 mt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between px-2">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Language</span>
+            <LanguageSwitcher direction="up" align="left" />
+          </div>
         </div>
       )}
     </header>

@@ -47,7 +47,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
           <DropZone
             onFilesSelected={(files) => onFilesSelected(files, 'converter')}
             title={t('hero.dropzoneTitle', 'Drop images here to start')}
-            subtitle={t('hero.dropzoneSubtitle', 'JPG, PNG, WebP, AVIF, SVG, GIF, BMP, ICO')}
           />
         </div>
       </div>
@@ -197,6 +196,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                   3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Resize Image"</strong> button to resize the image.
                 </li>
               </ol>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('resizer');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-900/60 transition-all active:scale-98 cursor-pointer"
+                >
+                  <span>Launch Image Resizer</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -258,6 +271,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab, onFilesSelecte
                   3. Click the <strong className="text-slate-900 dark:text-white font-semibold">"Download"</strong> button to save the optimized file.
                 </li>
               </ol>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('compressor');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-900/60 transition-all active:scale-98 cursor-pointer"
+                >
+                  <span>Launch Image Compressor</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
